@@ -1,0 +1,33 @@
+# Environment Variables (DO NOT COMMIT)
+.env
+.env.local
+.env.production
+
+# Supabase
+supabase/.branches
+supabase/.temp
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+*.lock
+
+# Coverage
+coverage/
+
+# Misc
+*.log
+*.swp
+.DS_Store
