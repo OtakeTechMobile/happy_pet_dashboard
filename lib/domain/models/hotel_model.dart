@@ -51,21 +51,21 @@ class HotelModel extends Equatable {
 
   factory HotelModel.fromJson(Map<String, dynamic> json) {
     return HotelModel(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      addressStreet: json['address_street'] as String?,
-      addressNumber: json['address_number'] as String?,
-      addressCity: json['address_city'] as String?,
-      addressState: json['address_state'] as String?,
-      addressZip: json['address_zip'] as String?,
-      phone: json['phone'] as String?,
-      email: json['email'] as String?,
-      capacity: json['capacity'] as int? ?? 20,
-      businessHours: json['business_hours'] as Map<String, dynamic>?,
-      settings: json['settings'] as Map<String, dynamic>?,
-      isActive: json['is_active'] as bool? ?? true,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      addressStreet: json['address_street'] ?? '',
+      addressNumber: json['address_number'] ?? '',
+      addressCity: json['address_city'] ?? '',
+      addressState: json['address_state'] ?? '',
+      addressZip: json['address_zip'] ?? '',
+      phone: json['phone'] ?? '',
+      email: json['email'] ?? '',
+      capacity: json['capacity'] ?? 0,
+      businessHours: json['business_hours'] ?? '',
+      settings: json['settings'] ?? '',
+      isActive: json['is_active'] ?? true,
+      createdAt: DateTime.parse(json['created_at'] ?? ''),
+      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
     );
   }
 
@@ -127,20 +127,20 @@ class HotelModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        addressStreet,
-        addressNumber,
-        addressCity,
-        addressState,
-        addressZip,
-        phone,
-        email,
-        capacity,
-        businessHours,
-        settings,
-        isActive,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    name,
+    addressStreet,
+    addressNumber,
+    addressCity,
+    addressState,
+    addressZip,
+    phone,
+    email,
+    capacity,
+    businessHours,
+    settings,
+    isActive,
+    createdAt,
+    updatedAt,
+  ];
 }

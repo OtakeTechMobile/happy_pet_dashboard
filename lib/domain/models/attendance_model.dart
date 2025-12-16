@@ -42,17 +42,17 @@ class AttendanceModel extends Equatable {
 
   factory AttendanceModel.fromJson(Map<String, dynamic> json) {
     return AttendanceModel(
-      id: json['id'] as String,
-      stayId: json['stay_id'] as String,
-      petId: json['pet_id'] as String,
-      date: DateTime.parse(json['date'] as String),
-      arrivedAt: json['arrived_at'] != null ? DateTime.parse(json['arrived_at'] as String) : null,
-      leftAt: json['left_at'] != null ? DateTime.parse(json['left_at'] as String) : null,
-      status: AttendanceStatus.fromString(json['status'] as String),
-      notes: json['notes'] as String?,
-      recordedBy: json['recorded_by'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      id: json['id'] ?? '',
+      stayId: json['stay_id'] ?? '',
+      petId: json['pet_id'] ?? '',
+      date: DateTime.parse(json['date'] ?? ''),
+      arrivedAt: json['arrived_at'] != null ? DateTime.parse(json['arrived_at'] ?? '') : null,
+      leftAt: json['left_at'] != null ? DateTime.parse(json['left_at'] ?? '') : null,
+      status: AttendanceStatus.fromString(json['status'] ?? ''),
+      notes: json['notes'] ?? '',
+      recordedBy: json['recorded_by'] ?? '',
+      createdAt: DateTime.parse(json['created_at'] ?? ''),
+      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
     );
   }
 
@@ -102,16 +102,16 @@ class AttendanceModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        stayId,
-        petId,
-        date,
-        arrivedAt,
-        leftAt,
-        status,
-        notes,
-        recordedBy,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    stayId,
+    petId,
+    date,
+    arrivedAt,
+    leftAt,
+    status,
+    notes,
+    recordedBy,
+    createdAt,
+    updatedAt,
+  ];
 }

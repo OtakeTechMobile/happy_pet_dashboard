@@ -65,31 +65,31 @@ class StayModel extends Equatable {
 
   factory StayModel.fromJson(Map<String, dynamic> json) {
     return StayModel(
-      id: json['id'] as String,
-      petId: json['pet_id'] as String,
-      tutorId: json['tutor_id'] as String,
-      status: StayStatus.fromString(json['status'] as String),
-      scheduledCheckIn: DateTime.parse(json['scheduled_checkin'] as String),
-      scheduledCheckOut: DateTime.parse(json['scheduled_checkout'] as String),
-      actualCheckin: json['actual_checkin'] != null ? DateTime.parse(json['actual_checkin'] as String) : null,
-      actualCheckout: json['actual_checkout'] != null ? DateTime.parse(json['actual_checkout'] as String) : null,
-      checkInBy: json['check_in_by'] as String?,
-      checkOutBy: json['check_out_by'] as String?,
-      packageType: json['package_type'] as String?,
+      id: json['id'] ?? '',
+      petId: json['pet_id'] ?? '',
+      tutorId: json['tutor_id'] ?? '',
+      status: StayStatus.fromString(json['status'] ?? ''),
+      scheduledCheckIn: DateTime.parse(json['scheduled_checkin'] ?? ''),
+      scheduledCheckOut: DateTime.parse(json['scheduled_checkout'] ?? ''),
+      actualCheckin: json['actual_checkin'] != null ? DateTime.parse(json['actual_checkin'] ?? '') : null,
+      actualCheckout: json['actual_checkout'] != null ? DateTime.parse(json['actual_checkout'] ?? '') : null,
+      checkInBy: json['check_in_by'] ?? '',
+      checkOutBy: json['check_out_by'] ?? '',
+      packageType: json['package_type'] ?? '',
       basePrice: (json['base_price'] as num?)?.toDouble(),
       additionalServices:
           (json['additional_services'] as List<dynamic>?)
               ?.map((s) => AdditionalService.fromJson(s as Map<String, dynamic>))
               .toList() ??
           const [],
-      totalPrice: (json['total_price'] as num?)?.toDouble(),
-      notes: json['notes'] as String?,
-      cancellationReason: json['cancellation_reason'] as String?,
-      cancelledAt: json['cancelled_at'] != null ? DateTime.parse(json['cancelled_at'] as String) : null,
-      cancelledBy: json['cancelled_by'] as String?,
-      createdBy: json['created_by'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      totalPrice: (json['total_price'] ?? 0)?.toDouble(),
+      notes: json['notes'] ?? '',
+      cancellationReason: json['cancellation_reason'] ?? '',
+      cancelledAt: json['cancelled_at'] != null ? DateTime.parse(json['cancelled_at'] ?? '') : null,
+      cancelledBy: json['cancelled_by'] ?? '',
+      createdBy: json['created_by'] ?? '',
+      createdAt: DateTime.parse(json['created_at'] ?? ''),
+      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
     );
   }
 

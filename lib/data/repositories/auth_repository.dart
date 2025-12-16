@@ -12,20 +12,12 @@ class AuthRepository extends BaseRepository {
 
   /// Sign in with email and password
   Future<AuthResponse> signInWithEmail(String email, String password) async {
-    log(email.length.toString());
-    log(email);
-    log(password.length.toString());
-    log(password);
-    log(email.trim().length.toString());
-    log(email.trim());
-    log(password.trim().length.toString());
-    log(password.trim());
+    log('signInWithEmail: $email');
+    log('signInWithEmail: $password');
     try {
       final response = await auth.signInWithPassword(email: email, password: password.trim());
-      log(response.user?.email?.toString() ?? '');
       return response;
     } on Exception catch (error, stackTrace) {
-      log(error.toString());
       handleError(error, stackTrace);
     }
   }

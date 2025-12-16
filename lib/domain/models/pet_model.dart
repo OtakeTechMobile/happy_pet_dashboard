@@ -90,46 +90,46 @@ class PetModel extends Equatable {
 
   factory PetModel.fromJson(Map<String, dynamic> json) {
     return PetModel(
-      id: json['id'] as String,
-      tutorId: json['tutor_id'] as String,
-      name: json['name'] as String,
-      species: json['species'] as String,
-      breed: json['breed'] as String?,
+      id: json['id'] ?? '',
+      tutorId: json['tutor_id'] ?? '',
+      name: json['name'] ?? '',
+      species: json['species'] ?? '',
+      breed: json['breed'] ?? '',
       gender: json['gender'] as String?,
-      birthDate: json['birth_date'] != null ? DateTime.parse(json['birth_date'] as String) : null,
-      weight: (json['weight'] as num?)?.toDouble(),
-      microchipNumber: json['microchip_number'] as String?,
-      color: json['color'] as String?,
-      photoUrl: json['photo_url'] as String?,
-      photos: (json['photos'] as List<dynamic>?)?.cast<String>() ?? const [],
-      medicalConditions: json['medical_conditions'] as String?,
-      allergies: json['allergies'] as String?,
-      specialNeeds: json['special_needs'] as String?,
-      foodBrand: json['food_brand'] as String?,
-      foodAmount: json['food_amount'] as String?,
-      feedingTimes: json['feeding_times'] as int? ?? 2,
+      birthDate: json['birth_date'] != null ? DateTime.parse(json['birth_date'] ?? '') : null,
+      weight: (json['weight'] ?? 0)?.toDouble(),
+      microchipNumber: json['microchip_number'] ?? '',
+      color: json['color'] ?? '',
+      photoUrl: json['photo_url'] ?? '',
+      photos: (json['photos'] ?? <String>[]).cast<String>(),
+      medicalConditions: json['medical_conditions'] ?? '',
+      allergies: json['allergies'] ?? '',
+      specialNeeds: json['special_needs'] ?? '',
+      foodBrand: json['food_brand'] ?? '',
+      foodAmount: json['food_amount'] ?? '',
+      feedingTimes: json['feeding_times'] ?? 2,
       vaccinations:
           (json['vaccinations'] as List<dynamic>?)
               ?.map((v) => VaccinationInfo.fromJson(v as Map<String, dynamic>))
               .toList() ??
-          const [],
+          <VaccinationInfo>[],
+
       medications:
           (json['medications'] as List<dynamic>?)
               ?.map((m) => MedicationInfo.fromJson(m as Map<String, dynamic>))
               .toList() ??
-          const [],
-      veterinarianName: json['veterinarian_name'] as String?,
-      veterinarianPhone: json['veterinarian_phone'] as String?,
-      isActive: json['is_active'] as bool? ?? true,
-      createdBy: json['created_by'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+          <MedicationInfo>[],
+      veterinarianName: json['veterinarian_name'] ?? '',
+      veterinarianPhone: json['veterinarian_phone'] ?? '',
+      isActive: json['is_active'] ?? true,
+      createdBy: json['created_by'] ?? '',
+      createdAt: DateTime.parse(json['created_at'] ?? ''),
+      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
+    final map = {
       'tutor_id': tutorId,
       'name': name,
       'species': species,
@@ -156,6 +156,10 @@ class PetModel extends Equatable {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
+    if (id.isNotEmpty) {
+      map['id'] = id;
+    }
+    return map;
   }
 
   PetModel copyWith({
@@ -263,10 +267,10 @@ class VaccinationInfo extends Equatable {
 
   factory VaccinationInfo.fromJson(Map<String, dynamic> json) {
     return VaccinationInfo(
-      name: json['name'] as String,
-      date: DateTime.parse(json['date'] as String),
-      nextDate: json['next_date'] != null ? DateTime.parse(json['next_date'] as String) : null,
-      documentUrl: json['document_url'] as String?,
+      name: json['name'] ?? '',
+      date: DateTime.parse(json['date'] ?? ''),
+      nextDate: json['next_date'] != null ? DateTime.parse(json['next_date'] ?? '') : null,
+      documentUrl: json['document_url'] ?? '',
     );
   }
 

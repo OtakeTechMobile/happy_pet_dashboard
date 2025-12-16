@@ -8,12 +8,7 @@ class TutorRepository extends BaseRepository {
   static const String tableName = 'tutors';
 
   /// Get all tutors with pagination
-  Future<List<TutorModel>> getAll({
-    int limit = 50,
-    int offset = 0,
-    String? searchQuery,
-    bool? isActive,
-  }) async {
+  Future<List<TutorModel>> getAll({int limit = 50, int offset = 0, String? searchQuery, bool? isActive}) async {
     try {
       dynamic query = from(tableName).select();
 
@@ -59,7 +54,11 @@ class TutorRepository extends BaseRepository {
   /// Create new tutor
   Future<TutorModel> create(TutorModel tutor) async {
     try {
-      final response = await from(tableName).insert(tutor.toJson()).select().single();
+      final json = tutor.toJson();
+      if (json['id'] == '') {
+        json.remove('id');
+      }
+      final response = await from(tableName).insert(json).select().single();
       return TutorModel.fromJson(response);
     } on Exception catch (error, stackTrace) {
       handleError(error, stackTrace);

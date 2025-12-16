@@ -64,22 +64,22 @@ class TutorModel extends Equatable {
 
   factory TutorModel.fromJson(Map<String, dynamic> json) {
     return TutorModel(
-      id: json['id'] as String,
-      fullName: json['full_name'] as String,
-      email: json['email'] as String,
-      phone: json['phone'] as String,
-      secondaryPhone: json['secondary_phone'] as String?,
-      cpf: json['cpf'] as String?,
-      addressStreet: json['address_street'] as String?,
-      addressNumber: json['address_number'] as String?,
-      addressComplement: json['address_complement'] as String?,
-      addressNeighborhood: json['address_neighborhood'] as String?,
-      addressCity: json['address_city'] as String?,
-      addressState: json['address_state'] as String?,
-      addressZip: json['address_zip'] as String?,
-      emergencyContactName: json['emergency_contact_name'] as String?,
-      emergencyContactPhone: json['emergency_contact_phone'] as String?,
-      notes: json['notes'] as String?,
+      id: json['id'] ?? '',
+      fullName: json['full_name'] ?? '',
+      email: json['email'] ?? '',
+      phone: json['phone'] ?? '',
+      secondaryPhone: json['secondary_phone'] ?? '',
+      cpf: json['cpf'] ?? '',
+      addressStreet: json['address_street'] ?? '',
+      addressNumber: json['address_number'] ?? '',
+      addressComplement: json['address_complement'] ?? '',
+      addressNeighborhood: json['address_neighborhood'] ?? '',
+      addressCity: json['address_city'] ?? '',
+      addressState: json['address_state'] ?? '',
+      addressZip: json['address_zip'] ?? '',
+      emergencyContactName: json['emergency_contact_name'] ?? '',
+      emergencyContactPhone: json['emergency_contact_phone'] ?? '',
+      notes: json['notes'] ?? '',
       documents:
           (json['documents'] as List<dynamic>?)
               ?.map((doc) => DocumentInfo.fromJson(doc as Map<String, dynamic>))

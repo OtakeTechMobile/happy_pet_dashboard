@@ -36,18 +36,18 @@ class NotificationModel extends Equatable {
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
     return NotificationModel(
-      id: json['id'] as String,
-      recipientId: json['recipient_id'] as String?,
-      recipientEmail: json['recipient_email'] as String?,
-      recipientPhone: json['recipient_phone'] as String?,
-      type: NotificationType.fromString(json['type'] as String),
-      subject: json['subject'] as String?,
-      content: json['content'] as String,
-      status: NotificationStatus.fromString(json['status'] as String),
-      sentAt: json['sent_at'] != null ? DateTime.parse(json['sent_at'] as String) : null,
-      errorMessage: json['error_message'] as String?,
+      id: json['id'] ?? '',
+      recipientId: json['recipient_id'] ?? '',
+      recipientEmail: json['recipient_email'] ?? '',
+      recipientPhone: json['recipient_phone'] ?? '',
+      type: NotificationType.fromString(json['type'] ?? ''),
+      subject: json['subject'] ?? '',
+      content: json['content'] ?? '',
+      status: NotificationStatus.fromString(json['status'] ?? ''),
+      sentAt: json['sent_at'] != null ? DateTime.parse(json['sent_at'] ?? '') : null,
+      errorMessage: json['error_message'] ?? '',
       metadata: json['metadata'] as Map<String, dynamic>?,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: DateTime.parse(json['created_at'] ?? ''),
     );
   }
 
@@ -100,19 +100,19 @@ class NotificationModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        recipientId,
-        recipientEmail,
-        recipientPhone,
-        type,
-        subject,
-        content,
-        status,
-        sentAt,
-        errorMessage,
-        metadata,
-        createdAt,
-      ];
+    id,
+    recipientId,
+    recipientEmail,
+    recipientPhone,
+    type,
+    subject,
+    content,
+    status,
+    sentAt,
+    errorMessage,
+    metadata,
+    createdAt,
+  ];
 }
 
 /// Notification type enum

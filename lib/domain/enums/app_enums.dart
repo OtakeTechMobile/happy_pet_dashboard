@@ -100,6 +100,7 @@ enum RoutineType {
 
 /// Routine status enum
 enum RoutineStatus {
+  scheduled,
   pending,
   inProgress,
   completed,
@@ -107,6 +108,8 @@ enum RoutineStatus {
 
   String get displayName {
     switch (this) {
+      case RoutineStatus.scheduled:
+        return 'Scheduled';
       case RoutineStatus.pending:
         return 'Pending';
       case RoutineStatus.inProgress:
@@ -120,6 +123,8 @@ enum RoutineStatus {
 
   static RoutineStatus fromString(String value) {
     switch (value.toLowerCase()) {
+      case 'scheduled':
+        return RoutineStatus.scheduled;
       case 'in_progress':
         return RoutineStatus.inProgress;
       case 'completed':
@@ -133,6 +138,8 @@ enum RoutineStatus {
 
   String toDbString() {
     switch (this) {
+      case RoutineStatus.scheduled:
+        return 'scheduled';
       case RoutineStatus.inProgress:
         return 'in_progress';
       case RoutineStatus.completed:

@@ -51,29 +51,27 @@ class RoutineModel extends Equatable {
 
   factory RoutineModel.fromJson(Map<String, dynamic> json) {
     return RoutineModel(
-      id: json['id'] as String,
-      stayId: json['stay_id'] as String,
-      petId: json['pet_id'] as String,
-      type: RoutineType.fromString(json['type'] as String),
-      title: json['title'] as String,
-      description: json['description'] as String?,
-      scheduledTime: json['scheduled_time'] as String,
-      date: DateTime.parse(json['date'] as String),
-      status: RoutineStatus.fromString(json['status'] as String),
-      startedAt: json['started_at'] != null ? DateTime.parse(json['started_at'] as String) : null,
-      completedAt: json['completed_at'] != null ? DateTime.parse(json['completed_at'] as String) : null,
-      assignedTo: json['assigned_to'] as String?,
-      completedBy: json['completed_by'] as String?,
-      notes: json['notes'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      id: json['id'] ?? '',
+      stayId: json['stay_id'] ?? '',
+      petId: json['pet_id'] ?? '',
+      type: RoutineType.fromString(json['type'] ?? ''),
+      title: json['title'] ?? '',
+      description: json['description'] ?? '',
+      scheduledTime: json['scheduled_time'] ?? '',
+      date: DateTime.parse(json['date'] ?? ''),
+      status: RoutineStatus.fromString(json['status'] ?? ''),
+      startedAt: json['started_at'] != null ? DateTime.parse(json['started_at'] ?? '') : null,
+      completedAt: json['completed_at'] != null ? DateTime.parse(json['completed_at'] ?? '') : null,
+      assignedTo: json['assigned_to'] ?? '',
+      completedBy: json['completed_by'] ?? '',
+      notes: json['notes'] ?? '',
+      createdAt: DateTime.parse(json['created_at'] ?? ''),
+      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'stay_id': stayId,
+    final map = {
       'pet_id': petId,
       'type': type.name,
       'title': title,
@@ -83,12 +81,23 @@ class RoutineModel extends Equatable {
       'status': status.toDbString(),
       'started_at': startedAt?.toIso8601String(),
       'completed_at': completedAt?.toIso8601String(),
-      'assigned_to': assignedTo,
-      'completed_by': completedBy,
       'notes': notes,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
+    if (id.isNotEmpty) {
+      map['id'] = id;
+    }
+    if (stayId.isNotEmpty) {
+      map['stay_id'] = stayId;
+    }
+    if (assignedTo != null && assignedTo!.isNotEmpty) {
+      map['assigned_to'] = assignedTo;
+    }
+    if (completedBy != null && completedBy!.isNotEmpty) {
+      map['completed_by'] = completedBy;
+    }
+    return map;
   }
 
   RoutineModel copyWith({

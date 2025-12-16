@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:typed_data';
 
 import '../../domain/models/pet_model.dart';
@@ -74,9 +75,14 @@ class PetRepository extends BaseRepository {
   /// Create new pet
   Future<PetModel> create(PetModel pet) async {
     try {
-      final response = await from(tableName).insert(pet.toJson()).select().single();
+      final json = pet.toJson();
+      if (json['id'] == '') {
+        json.remove('id');
+      }
+      final response = await from(tableName).insert(json).select().single();
       return PetModel.fromJson(response);
     } on Exception catch (error, stackTrace) {
+      log(error.toString());
       handleError(error, stackTrace);
     }
   }

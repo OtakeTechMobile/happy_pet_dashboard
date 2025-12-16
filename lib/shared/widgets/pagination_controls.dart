@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../l10n/app_localizations.dart';
 
 class PaginationControls extends StatelessWidget {
@@ -31,7 +32,7 @@ class PaginationControls extends StatelessWidget {
         border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(l10n.rowsPerPage),
           const SizedBox(width: 8),
