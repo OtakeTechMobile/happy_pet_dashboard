@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 
-import '../../../../data/repositories/tutor_repository.dart';
-import '../../../../domain/models/tutor_model.dart';
+import '../../../data/repositories/tutor_repository.dart';
+import '../../../domain/models/tutor_model.dart';
 import 'clients_state.dart';
 
 class ClientsCubit extends Cubit<ClientsState> {

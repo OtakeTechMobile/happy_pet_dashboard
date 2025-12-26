@@ -1,5 +1,8 @@
+import 'package:brasil_fields/brasil_fields.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../data/repositories/pet_repository.dart';
 import '../../../../data/repositories/routine_repository.dart';
@@ -7,6 +10,8 @@ import '../../../../data/repositories/tutor_repository.dart';
 import '../../../../domain/enums/app_enums.dart'; // Needed for RoutineType/Status
 import '../../../../domain/models/pet_model.dart';
 import '../../../../domain/models/routine_model.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/utils/responsive_helper.dart';
 import '../cubit/appointments_cubit.dart';
 import '../cubit/appointments_state.dart';
 
@@ -31,8 +36,9 @@ class AppointmentsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Appointments')),
+      appBar: AppBar(title: Text(l10n.appointments)),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           showDialog(
@@ -52,7 +58,7 @@ class AppointmentsView extends StatelessWidget {
           } else if (state is AppointmentsLoaded) {
             final appointments = state.appointments;
             if (appointments.isEmpty) {
-              return const Center(child: Text('No appointments found'));
+              return Center(child: Text(l10n.noAppointmentsFound));
             }
 
             return ListView.builder(
@@ -71,7 +77,7 @@ class AppointmentsView extends StatelessWidget {
                       child: Text(time, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                     title: Text('${vm.routine.title} - ${vm.petName}'),
-                    subtitle: Text('Client: ${vm.clientName}'),
+                    subtitle: Text(l10n.clientLabel(vm.clientName)),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -128,24 +134,41 @@ class EditAppointmentDialog extends StatefulWidget {
 }
 
 class _EditAppointmentDialogState extends State<EditAppointmentDialog> {
+  final _formKey = GlobalKey<FormState>();
+
   late TextEditingController _titleController;
+  late TextEditingController _descriptionController;
+  late TextEditingController _dateController;
   late TextEditingController _timeController;
+  late TextEditingController _notesController;
+
   String? _selectedPetId;
   late RoutineStatus _status;
+  late RoutineType _type;
+
   List<PetModel> _pets = [];
   bool _isLoadingPets = false;
-  // ignore: unused_field
-  final RoutineType _type = RoutineType.other;
 
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.routine?.title ?? '');
-    _timeController = TextEditingController(text: widget.routine?.scheduledTime ?? '09:00');
-    _selectedPetId = widget.routine?.petId;
-    _status = widget.routine?.status ?? RoutineStatus.scheduled;
+    final routine = widget.routine;
 
-    if (widget.routine == null) {
+    _titleController = TextEditingController(text: routine?.title ?? '');
+    _descriptionController = TextEditingController(text: routine?.description ?? '');
+    _dateController = TextEditingController(
+      text: routine?.date != null
+          ? DateFormat('dd/MM/yyyy').format(routine!.date)
+          : DateFormat('dd/MM/yyyy').format(DateTime.now()),
+    );
+    _timeController = TextEditingController(text: routine?.scheduledTime ?? '09:00');
+    _notesController = TextEditingController(text: routine?.notes ?? '');
+
+    _selectedPetId = routine?.petId;
+    _status = routine?.status ?? RoutineStatus.scheduled;
+    _type = routine?.type ?? RoutineType.other;
+
+    if (routine == null) {
       _loadPets();
     }
   }
@@ -171,117 +194,175 @@ class _EditAppointmentDialogState extends State<EditAppointmentDialog> {
   @override
   void dispose() {
     _titleController.dispose();
+    _descriptionController.dispose();
+    _dateController.dispose();
     _timeController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.routine != null;
+    final l10n = AppLocalizations.of(context)!;
+    final title = isEditing ? l10n.editAppointment : l10n.newAppointment;
+
     return AlertDialog(
-      title: Text(widget.routine == null ? 'New Appointment' : 'Edit Appointment'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
+      title: Text(title),
+      content: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.55,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!isEditing) ...[
+                    if (_isLoadingPets)
+                      const CircularProgressIndicator()
+                    else if (_pets.isEmpty)
+                      Text(l10n.noPetsFoundCreateFirst)
+                    else
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedPetId,
+                        decoration: InputDecoration(labelText: l10n.petRequired),
+                        items: _pets.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name))).toList(),
+                        onChanged: (val) => setState(() => _selectedPetId = val),
+                        validator: (val) => val == null ? l10n.selectPet : null,
+                      ),
+                    const SizedBox(height: 16),
+                  ],
+                  TextFormField(
+                    controller: _titleController,
+                    decoration: InputDecoration(labelText: l10n.titleRequired),
+                    validator: (v) => v!.isEmpty ? l10n.requiredField : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _descriptionController,
+                    decoration: InputDecoration(labelText: l10n.description),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 16),
+                  ResponsiveFormFieldRow(
+                    children: [
+                      DropdownButtonFormField<RoutineType>(
+                        initialValue: _type,
+                        decoration: InputDecoration(labelText: l10n.type),
+                        items: RoutineType.values
+                            .map((t) => DropdownMenuItem(value: t, child: Text(t.displayName)))
+                            .toList(),
+                        onChanged: (val) => setState(() => _type = val!),
+                      ),
+                      DropdownButtonFormField<RoutineStatus>(
+                        initialValue: _status,
+                        decoration: InputDecoration(labelText: l10n.status),
+                        items: RoutineStatus.values
+                            .map((s) => DropdownMenuItem(value: s, child: Text(s.displayName)))
+                            .toList(),
+                        onChanged: (val) => setState(() => _status = val!),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ResponsiveFormFieldRow(
+                    children: [
+                      TextFormField(
+                        controller: _dateController,
+                        decoration: InputDecoration(labelText: l10n.datePlaceholder),
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly, DataInputFormatter()],
+                      ),
+                      TextFormField(
+                        controller: _timeController,
+                        decoration: InputDecoration(labelText: l10n.timePlaceholder),
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly, HoraInputFormatter()],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _notesController,
+                    decoration: InputDecoration(labelText: l10n.internalNotes),
+                    maxLines: 3,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _timeController,
-              decoration: const InputDecoration(labelText: 'Time (HH:mm)'),
-              onTap: () async {
-                TimeOfDay? picked = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-                if (picked != null) {
-                  // ignore: use_build_context_synchronously
-                  // final localizations = MaterialLocalizations.of(context);
-                  final formatted =
-                      '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
-                  _timeController.text = formatted;
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            if (widget.routine == null) ...[
-              if (_isLoadingPets)
-                const CircularProgressIndicator()
-              else if (_pets.isEmpty)
-                const Text('No pets found. Create a pet first.')
-              else
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedPetId,
-                  decoration: const InputDecoration(labelText: 'Pet'),
-                  items: _pets.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name))).toList(),
-                  onChanged: (val) => setState(() => _selectedPetId = val),
-                ),
-            ],
-            const SizedBox(height: 16),
-            DropdownButtonFormField<RoutineStatus>(
-              initialValue: _status,
-              decoration: const InputDecoration(labelText: 'Status'),
-              items: RoutineStatus.values.map((s) => DropdownMenuItem(value: s, child: Text(s.displayName))).toList(),
-              onChanged: (val) => setState(() => _status = val!),
-            ),
-          ],
+          ),
         ),
       ),
       actions: [
-        if (widget.routine != null)
+        if (isEditing)
           TextButton(
             onPressed: () {
               showDialog(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: const Text('Confirm Delete'),
-                  content: const Text('Delete this appointment?'),
+                  title: Text(l10n.confirmDelete),
+                  content: Text(l10n.confirmDeleteAppointmentMessage),
                   actions: [
-                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                    TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
                     TextButton(
                       onPressed: () {
                         context.read<AppointmentsCubit>().deleteAppointment(widget.routine!.id);
                         Navigator.pop(ctx);
                         Navigator.pop(context);
                       },
-                      child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                      child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
                     ),
                   ],
                 ),
               );
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
           ),
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel)),
         FilledButton(
           onPressed: () {
-            if (_titleController.text.isEmpty) return;
-            if (widget.routine == null && _selectedPetId == null) return;
+            if (_formKey.currentState!.validate()) {
+              // Parse Date
+              DateTime date = DateTime.now();
+              if (_dateController.text.isNotEmpty) {
+                try {
+                  date = DateFormat('dd/MM/yyyy').parse(_dateController.text);
+                } catch (_) {}
+              }
 
-            if (widget.routine != null) {
-              final updated = widget.routine!.copyWith(
-                title: _titleController.text,
-                scheduledTime: _timeController.text,
-                status: _status,
-              );
-              context.read<AppointmentsCubit>().updateAppointment(updated);
-            } else {
-              final newRoutine = RoutineModel(
-                id: '',
-                petId: _selectedPetId!,
-                stayId: '',
-                type: _type,
-                title: _titleController.text,
-                scheduledTime: _timeController.text,
-                date: DateTime.now(),
-                status: _status,
-                createdAt: DateTime.now(),
-                updatedAt: DateTime.now(),
-              );
-              context.read<AppointmentsCubit>().createAppointment(newRoutine);
+              if (widget.routine != null) {
+                final updated = widget.routine!.copyWith(
+                  title: _titleController.text,
+                  description: _descriptionController.text,
+                  scheduledTime: _timeController.text,
+                  date: date,
+                  status: _status,
+                  type: _type,
+                  notes: _notesController.text,
+                );
+                context.read<AppointmentsCubit>().updateAppointment(updated);
+              } else {
+                final newRoutine = RoutineModel(
+                  id: '',
+                  petId: _selectedPetId!,
+                  stayId: '', // Optional or handle later
+                  type: _type,
+                  title: _titleController.text,
+                  description: _descriptionController.text,
+                  scheduledTime: _timeController.text,
+                  date: date,
+                  status: _status,
+                  createdAt: DateTime.now(),
+                  updatedAt: DateTime.now(),
+                  notes: _notesController.text,
+                );
+                context.read<AppointmentsCubit>().createAppointment(newRoutine);
+              }
+              Navigator.pop(context);
             }
-            Navigator.pop(context);
           },
-          child: const Text('Save'),
+          child: Text(l10n.save),
         ),
       ],
     );

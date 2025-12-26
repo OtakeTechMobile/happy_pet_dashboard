@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -129,4 +130,124 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get completed => 'Completed';
+
+  @override
+  String get noClientsFound => 'No clients found';
+
+  @override
+  String get pageOutOfBounds => 'Page out of bounds';
+
+  @override
+  String get active => 'Active';
+
+  @override
+  String get inactive => 'Inactive';
+
+  @override
+  String get newClient => 'New Client';
+
+  @override
+  String get personalData => 'Personal Data';
+
+  @override
+  String get fullNameRequired => 'Full Name *';
+
+  @override
+  String get requiredField => 'Required field';
+
+  @override
+  String get cpf => 'CPF';
+
+  @override
+  String get emailRequired => 'Email *';
+
+  @override
+  String get primaryPhoneRequired => 'Primary Phone *';
+
+  @override
+  String get secondaryPhone => 'Secondary Phone';
+
+  @override
+  String get zipCode => 'Zip Code';
+
+  @override
+  String get street => 'Street';
+
+  @override
+  String get number => 'Number';
+
+  @override
+  String get complement => 'Complement';
+
+  @override
+  String get neighborhood => 'Neighborhood';
+
+  @override
+  String get city => 'City';
+
+  @override
+  String get stateAbbr => 'State';
+
+  @override
+  String get emergencyContact => 'Emergency Contact';
+
+  @override
+  String get contactName => 'Contact Name';
+
+  @override
+  String get contactPhone => 'Contact Phone';
+
+  @override
+  String get observations => 'Observations';
+
+  @override
+  String get generalNotes => 'General Notes';
+
+  @override
+  String get confirmDelete => 'Confirm Delete';
+
+  @override
+  String get confirmDeleteClientMessage => 'Are you sure you want to delete this client?';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get noAppointmentsFound => 'No appointments found';
+
+  @override
+  String get newAppointment => 'New Appointment';
+
+  @override
+  String get editAppointment => 'Edit Appointment';
+
+  @override
+  String get noPetsFoundCreateFirst => 'No pets found. Create a pet first.';
+
+  @override
+  String get petRequired => 'Pet *';
+
+  @override
+  String get selectPet => 'Select a pet';
+
+  @override
+  String get titleRequired => 'Title *';
+
+  @override
+  String get description => 'Description';
+
+  @override
+  String get type => 'Type';
+
+  @override
+  String get datePlaceholder => 'Date (dd/mm/yyyy)';
+
+  @override
+  String get timePlaceholder => 'Time (HH:mm)';
+
+  @override
+  String get internalNotes => 'Internal Notes';
+
+  @override
+  String get confirmDeleteAppointmentMessage => 'Are you sure you want to delete this appointment?';
 }

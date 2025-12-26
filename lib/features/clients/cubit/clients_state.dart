@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../../domain/models/tutor_model.dart';
+import '../../../domain/models/tutor_model.dart';
 
 abstract class ClientsState extends Equatable {
   const ClientsState();

@@ -1,6 +1,9 @@
+import 'package:brasil_fields/brasil_fields.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/services/via_cep_service.dart';
 import '../../../../data/repositories/hotel_repository.dart';
 import '../../../../domain/models/hotel_model.dart';
 import '../cubit/hotel_cubit.dart';
@@ -30,7 +33,11 @@ class _HotelViewState extends State<HotelView> {
   late TextEditingController _streetController;
   late TextEditingController _numberController;
   late TextEditingController _cityController;
+  late TextEditingController _stateController;
+  late TextEditingController _zipController;
   late TextEditingController _capacityController;
+
+  bool _isLoadingCep = false;
 
   @override
   void initState() {
@@ -41,17 +48,47 @@ class _HotelViewState extends State<HotelView> {
     _streetController = TextEditingController();
     _numberController = TextEditingController();
     _cityController = TextEditingController();
+    _stateController = TextEditingController();
+    _zipController = TextEditingController();
     _capacityController = TextEditingController();
+
+    _zipController.addListener(_onZipChanged);
+  }
+
+  void _onZipChanged() {
+    final zip = _zipController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (zip.length == 8) {
+      _fetchAddress(zip);
+    }
+  }
+
+  Future<void> _fetchAddress(String zip) async {
+    setState(() => _isLoadingCep = true);
+    final service = ViaCepService();
+    final data = await service.getAddress(zip);
+    if (data != null && mounted) {
+      setState(() {
+        _streetController.text = data['logradouro'] ?? '';
+        _cityController.text = data['localidade'] ?? '';
+        _stateController.text = data['uf'] ?? '';
+      });
+    }
+    if (mounted) {
+      setState(() => _isLoadingCep = false);
+    }
   }
 
   @override
   void dispose() {
+    _zipController.removeListener(_onZipChanged);
     _nameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
     _streetController.dispose();
     _numberController.dispose();
     _cityController.dispose();
+    _stateController.dispose();
+    _zipController.dispose();
     _capacityController.dispose();
     super.dispose();
   }
@@ -66,11 +103,6 @@ class _HotelViewState extends State<HotelView> {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.error!)));
           }
           if (state.hotel != null) {
-            // Only update controllers if they are empty (initial load) or explicit reset?
-            // Better: update only when loaded for the first time or explicitly requested.
-            // This simple listener might overwrite user edits if not careful.
-            // For now, let's assume one-time load or we need a specific 'loaded' flag or compare values.
-            // Simplification: Check if controller text is empty or if we are just loading.
             if (_nameController.text.isEmpty && state.hotel!.name.isNotEmpty) {
               _populateControllers(state.hotel!);
             }
@@ -100,6 +132,7 @@ class _HotelViewState extends State<HotelView> {
                         child: TextFormField(
                           controller: _phoneController,
                           decoration: const InputDecoration(labelText: 'Phone', border: OutlineInputBorder()),
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly, TelefoneInputFormatter()],
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -120,6 +153,39 @@ class _HotelViewState extends State<HotelView> {
                   ),
                   const SizedBox(height: 24),
                   const Text('Address', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _zipController,
+                          decoration: InputDecoration(
+                            labelText: 'CEP',
+                            border: const OutlineInputBorder(),
+                            suffixIcon: _isLoadingCep
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  )
+                                : null,
+                          ),
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly, CepInputFormatter()],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _stateController,
+                          decoration: const InputDecoration(labelText: 'State (UF)', border: OutlineInputBorder()),
+                          maxLength: 2,
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _streetController,
@@ -171,6 +237,8 @@ class _HotelViewState extends State<HotelView> {
     _streetController.text = hotel.addressStreet ?? '';
     _numberController.text = hotel.addressNumber ?? '';
     _cityController.text = hotel.addressCity ?? '';
+    _stateController.text = hotel.addressState ?? '';
+    _zipController.text = hotel.addressZip ?? '';
     _capacityController.text = hotel.capacity.toString();
   }
 
@@ -190,6 +258,8 @@ class _HotelViewState extends State<HotelView> {
               addressStreet: _streetController.text,
               addressNumber: _numberController.text,
               addressCity: _cityController.text,
+              addressState: _stateController.text,
+              addressZip: _zipController.text,
               capacity: int.tryParse(_capacityController.text) ?? 20,
             );
 

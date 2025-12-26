@@ -1,11 +1,15 @@
+import 'package:brasil_fields/brasil_fields.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../data/repositories/pet_repository.dart';
 import '../../../../data/repositories/tutor_repository.dart';
 import '../../../../domain/models/pet_model.dart';
 import '../../../../domain/models/tutor_model.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/utils/responsive_helper.dart';
 import '../../../../shared/widgets/filter_bar.dart';
 import '../../../../shared/widgets/pagination_controls.dart';
 import '../cubit/pets_cubit.dart';
@@ -220,21 +224,66 @@ class EditPetDialog extends StatefulWidget {
 }
 
 class _EditPetDialogState extends State<EditPetDialog> {
+  final _formKey = GlobalKey<FormState>();
+
   late TextEditingController _nameController;
   late TextEditingController _breedController;
+  late TextEditingController _birthDateController; // dd/mm/yyyy
+  late TextEditingController _weightController;
+  late TextEditingController _microchipController;
+  late TextEditingController _colorController;
+  late TextEditingController _medicalConditionsController;
+  late TextEditingController _allergiesController;
+  late TextEditingController _specialNeedsController;
+  late TextEditingController _foodBrandController;
+  late TextEditingController _foodAmountController;
+  late TextEditingController _feedingTimesController;
+  late TextEditingController _vetNameController;
+  late TextEditingController _vetPhoneController;
+  late TextEditingController _photoUrlController;
+
+  String? _selectedSpecies;
+  String? _selectedGender;
   String? _selectedTutorId;
   List<TutorModel> _tutors = [];
   bool _isLoadingTutors = false;
 
+  final List<String> _speciesOptions = ['Cachorro', 'Gato', 'Ave', 'Outro'];
+  final List<String> _genderOptions = ['Macho', 'Fêmea'];
+
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.pet?.name ?? '');
-    _breedController = TextEditingController(text: widget.pet?.breed ?? '');
-    _selectedTutorId = widget.pet?.tutorId;
+    final pet = widget.pet;
 
-    if (widget.pet == null) {
+    _selectedTutorId = pet?.tutorId;
+    _selectedSpecies = pet?.species;
+    if (_selectedSpecies == 'Dog') _selectedSpecies = 'Cachorro'; // Mapping legacy
+    if (_selectedSpecies == 'Cat') _selectedSpecies = 'Gato';
+
+    _selectedGender = pet?.gender;
+
+    _nameController = TextEditingController(text: pet?.name ?? '');
+    _breedController = TextEditingController(text: pet?.breed ?? '');
+    _birthDateController = TextEditingController(
+      text: pet?.birthDate != null ? DateFormat('dd/MM/yyyy').format(pet!.birthDate!) : '',
+    );
+    _weightController = TextEditingController(text: pet?.weight?.toString() ?? '');
+    _microchipController = TextEditingController(text: pet?.microchipNumber ?? '');
+    _colorController = TextEditingController(text: pet?.color ?? '');
+    _medicalConditionsController = TextEditingController(text: pet?.medicalConditions ?? '');
+    _allergiesController = TextEditingController(text: pet?.allergies ?? '');
+    _specialNeedsController = TextEditingController(text: pet?.specialNeeds ?? '');
+    _foodBrandController = TextEditingController(text: pet?.foodBrand ?? '');
+    _foodAmountController = TextEditingController(text: pet?.foodAmount ?? '');
+    _feedingTimesController = TextEditingController(text: pet?.feedingTimes.toString() ?? '2');
+    _vetNameController = TextEditingController(text: pet?.veterinarianName ?? '');
+    _vetPhoneController = TextEditingController(text: pet?.veterinarianPhone ?? '');
+    _photoUrlController = TextEditingController(text: pet?.photoUrl ?? '');
+
+    if (pet == null) {
       _loadTutors();
+      _selectedSpecies = _speciesOptions.first;
     }
   }
 
@@ -245,9 +294,12 @@ class _EditPetDialogState extends State<EditPetDialog> {
       final tutors = await repo.getAll(limit: 100);
       setState(() {
         _tutors = tutors;
+        if (_tutors.isNotEmpty) {
+          _selectedTutorId = _tutors.first.id;
+        }
       });
     } catch (e) {
-      // basic error handling
+      // error handling
     } finally {
       setState(() => _isLoadingTutors = false);
     }
@@ -257,50 +309,171 @@ class _EditPetDialogState extends State<EditPetDialog> {
   void dispose() {
     _nameController.dispose();
     _breedController.dispose();
+    _birthDateController.dispose();
+    _weightController.dispose();
+    _microchipController.dispose();
+    _colorController.dispose();
+    _medicalConditionsController.dispose();
+    _allergiesController.dispose();
+    _specialNeedsController.dispose();
+    _foodBrandController.dispose();
+    _foodAmountController.dispose();
+    _feedingTimesController.dispose();
+    _vetNameController.dispose();
+    _vetPhoneController.dispose();
+    _photoUrlController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final isEditing = widget.pet != null;
+    final title = isEditing ? 'Editar Pet' : 'Novo Pet';
 
     return AlertDialog(
-      title: Text(isEditing ? l10n.editPet : 'New Pet'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(labelText: l10n.name),
+      title: Text(title),
+      content: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.55,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildSectionHeader('Informações Básicas'),
+                  if (!isEditing) ...[
+                    if (_isLoadingTutors)
+                      const CircularProgressIndicator()
+                    else if (_tutors.isEmpty)
+                      const Text('Nenhum tutor encontrado.', style: TextStyle(color: Colors.red))
+                    else
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedTutorId,
+                        decoration: const InputDecoration(labelText: 'Tutor *'),
+                        items: _tutors.map((t) {
+                          return DropdownMenuItem(value: t.id, child: Text(t.fullName));
+                        }).toList(),
+                        onChanged: (val) => setState(() => _selectedTutorId = val),
+                        validator: (val) => val == null ? 'Selecione um tutor' : null,
+                      ),
+                    const SizedBox(height: 16),
+                  ],
+                  ResponsiveFormFieldRow(
+                    children: [
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(labelText: 'Nome do Pet *'),
+                        validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
+                      ),
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedSpecies,
+                        decoration: const InputDecoration(labelText: 'Espécie'),
+                        items: _speciesOptions.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                        onChanged: (val) => setState(() => _selectedSpecies = val),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ResponsiveFormFieldRow(
+                    children: [
+                      TextFormField(
+                        controller: _breedController,
+                        decoration: const InputDecoration(labelText: 'Raça'),
+                      ),
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedGender,
+                        decoration: const InputDecoration(labelText: 'Gênero'),
+                        items: _genderOptions.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                        onChanged: (val) => setState(() => _selectedGender = val),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ResponsiveFormFieldRow(
+                    children: [
+                      TextFormField(
+                        controller: _birthDateController,
+                        decoration: const InputDecoration(labelText: 'Nascimento (dd/mm/aaaa)'),
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly, DataInputFormatter()],
+                      ),
+                      TextFormField(
+                        controller: _weightController,
+                        decoration: const InputDecoration(labelText: 'Peso (Kg)'),
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ResponsiveFormFieldRow(
+                    children: [
+                      TextFormField(
+                        controller: _microchipController,
+                        decoration: const InputDecoration(labelText: 'Microchip'),
+                      ),
+                      TextFormField(
+                        controller: _colorController,
+                        decoration: const InputDecoration(labelText: 'Cor'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSectionHeader('Saúde'),
+                  ResponsiveFormFieldRow(
+                    children: [
+                      TextFormField(
+                        controller: _vetNameController,
+                        decoration: const InputDecoration(labelText: 'Veterinário'),
+                      ),
+                      TextFormField(
+                        controller: _vetPhoneController,
+                        decoration: const InputDecoration(labelText: 'Telefone Vet'),
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly, TelefoneInputFormatter()],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _medicalConditionsController,
+                    decoration: const InputDecoration(labelText: 'Condições Médicas'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _allergiesController,
+                    decoration: const InputDecoration(labelText: 'Alergias'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _specialNeedsController,
+                    decoration: const InputDecoration(labelText: 'Necessidades Especiais'),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSectionHeader('Alimentação'),
+                  ResponsiveFormFieldRow(
+                    children: [
+                      TextFormField(
+                        controller: _foodBrandController,
+                        decoration: const InputDecoration(labelText: 'Marca da Ração'),
+                      ),
+                      TextFormField(
+                        controller: _feedingTimesController,
+                        decoration: const InputDecoration(labelText: 'Vezes/Dia'),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _foodAmountController,
+                    decoration: const InputDecoration(labelText: 'Quantidade (g) ou Medida'),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _breedController,
-              decoration: const InputDecoration(labelText: 'Breed'),
-            ),
-            if (!isEditing) ...[
-              const SizedBox(height: 16),
-              if (_isLoadingTutors)
-                const CircularProgressIndicator()
-              else if (_tutors.isEmpty)
-                const Text('No tutors found. Create a tutor first.')
-              else
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedTutorId,
-                  decoration: const InputDecoration(labelText: 'Tutor'),
-                  items: _tutors.map((t) {
-                    return DropdownMenuItem(value: t.id, child: Text(t.fullName));
-                  }).toList(),
-                  onChanged: (val) {
-                    setState(() {
-                      _selectedTutorId = val;
-                    });
-                  },
-                ),
-            ],
-          ],
+          ),
         ),
       ),
       actions: [
@@ -310,50 +483,84 @@ class _EditPetDialogState extends State<EditPetDialog> {
               showDialog(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: const Text('Confirm Delete'),
-                  content: const Text('Are you sure you want to delete this pet?'),
+                  title: const Text('Confirmar Exclusão'),
+                  content: const Text('Tem certeza que deseja excluir este pet?'),
                   actions: [
-                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
                     TextButton(
                       onPressed: () {
                         context.read<PetsCubit>().deletePet(widget.pet!.id);
                         Navigator.pop(ctx);
                         Navigator.pop(context);
                       },
-                      child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                      child: const Text('Excluir', style: TextStyle(color: Colors.red)),
                     ),
                   ],
                 ),
               );
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Excluir', style: TextStyle(color: Colors.red)),
           ),
-        TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel)),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
         FilledButton(
           onPressed: () {
-            // Validate
-            if (_nameController.text.isEmpty) return;
-            if (!isEditing && _selectedTutorId == null) return;
+            if (_formKey.currentState!.validate()) {
+              // Parse Date
+              DateTime? bDate;
+              if (_birthDateController.text.isNotEmpty) {
+                try {
+                  bDate = DateFormat('dd/MM/yyyy').parse(_birthDateController.text);
+                } catch (_) {}
+              }
 
-            if (isEditing) {
-              final updated = widget.pet!.copyWith(name: _nameController.text, breed: _breedController.text);
-              context.read<PetsCubit>().updatePet(updated);
-            } else {
               final newPet = PetModel(
-                id: '',
+                id: widget.pet?.id ?? '',
                 tutorId: _selectedTutorId!,
                 name: _nameController.text,
-                species: 'Dog', // Hardcoded for now
+                species: _selectedSpecies ?? 'Cachorro',
                 breed: _breedController.text,
-                createdAt: DateTime.now(),
+                gender: _selectedGender,
+                birthDate: bDate,
+                weight: double.tryParse(_weightController.text.replaceAll(',', '.')),
+                microchipNumber: _microchipController.text,
+                color: _colorController.text,
+                medicalConditions: _medicalConditionsController.text,
+                allergies: _allergiesController.text,
+                specialNeeds: _specialNeedsController.text,
+                foodBrand: _foodBrandController.text,
+                foodAmount: _foodAmountController.text,
+                feedingTimes: int.tryParse(_feedingTimesController.text) ?? 2,
+                veterinarianName: _vetNameController.text,
+                veterinarianPhone: _vetPhoneController.text,
+                photoUrl: _photoUrlController.text,
+                createdAt: widget.pet?.createdAt ?? DateTime.now(),
                 updatedAt: DateTime.now(),
               );
-              context.read<PetsCubit>().createPet(newPet);
+
+              if (isEditing) {
+                context.read<PetsCubit>().updatePet(newPet);
+              } else {
+                context.read<PetsCubit>().createPet(newPet);
+              }
+              Navigator.pop(context);
             }
-            Navigator.pop(context);
           },
-          child: Text(l10n.save),
+          child: const Text('Salvar'),
         ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+        ),
+        const Divider(),
+        const SizedBox(height: 8),
       ],
     );
   }

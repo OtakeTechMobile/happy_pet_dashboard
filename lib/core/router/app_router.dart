@@ -9,7 +9,7 @@ import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/cubit/auth_state.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
-import '../../features/clients/presentation/pages/clients_page.dart';
+import '../../features/clients/pages/clients_page.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/hotel/presentation/pages/hotel_page.dart';
 import '../../features/pets/presentation/pages/pets_page.dart';

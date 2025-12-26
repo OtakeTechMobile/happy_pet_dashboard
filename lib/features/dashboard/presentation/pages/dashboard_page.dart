@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../l10n/app_localizations.dart';
 import '../cubit/dashboard_cubit.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -18,6 +19,7 @@ class DashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: BlocBuilder<DashboardCubit, DashboardState>(
         builder: (context, state) {
@@ -26,11 +28,11 @@ class DashboardView extends StatelessWidget {
           }
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding:  EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Overview', style: Theme.of(context).textTheme.headlineMedium),
+                Text(l10n?.overview ?? '', style: Theme.of(context).textTheme.headlineMedium),
                 const SizedBox(height: 24),
                 LayoutBuilder(
                   builder: (context, constraints) {
@@ -46,19 +48,19 @@ class DashboardView extends StatelessWidget {
                       children: [
                         _buildChartCard(
                           context,
-                          'Revenue Trend',
+                          l10n?.revenueTrend ?? '',
                           const _LineChartSample(),
                           width: (width - (crossAxisCount - 1) * 16) / crossAxisCount,
                         ),
                         _buildChartCard(
                           context,
-                          'Appointments',
+                          l10n?.appointments ?? '',
                           const _BarChartSample(),
                           width: (width - (crossAxisCount - 1) * 16) / crossAxisCount,
                         ),
                         _buildChartCard(
                           context,
-                          'Pet Types',
+                          l10n?.petTypes ?? '',
                           const _PieChartSample(),
                           width: (width - (crossAxisCount - 1) * 16) / crossAxisCount,
                         ),
