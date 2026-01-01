@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 import '../../../../data/repositories/pet_repository.dart';
 import '../../../../data/repositories/tutor_repository.dart';
@@ -251,6 +252,16 @@ class _EditPetDialogState extends State<EditPetDialog> {
   final List<String> _speciesOptions = ['Cachorro', 'Gato', 'Ave', 'Outro'];
   final List<String> _genderOptions = ['Macho', 'Fêmea'];
 
+  // Mandatory vaccines per species
+  final Map<String, List<String>> _mandatoryVaccines = {
+    'Cachorro': ['V8/V10', 'Gripe', 'Giárdia', 'Raiva'],
+    'Gato': ['V4/V5', 'Raiva'],
+  };
+
+  final Map<String, bool> _vaccineStatus = {};
+  Uint8List? _selectedPhotoBytes;
+  String? _selectedPhotoFileName;
+
   @override
   void initState() {
     super.initState();
@@ -284,6 +295,19 @@ class _EditPetDialogState extends State<EditPetDialog> {
     if (pet == null) {
       _loadTutors();
       _selectedSpecies = _speciesOptions.first;
+    }
+
+    _initializeVaccineStatus();
+  }
+
+  void _initializeVaccineStatus() {
+    _vaccineStatus.clear();
+    final species = _selectedSpecies ?? 'Cachorro';
+    final mandatory = _mandatoryVaccines[species] ?? [];
+    
+    for (final v in mandatory) {
+      final hasVaccine = widget.pet?.vaccinations.any((pv) => pv.name == v) ?? false;
+      _vaccineStatus[v] = hasVaccine;
     }
   }
 
@@ -470,6 +494,12 @@ class _EditPetDialogState extends State<EditPetDialog> {
                     controller: _foodAmountController,
                     decoration: const InputDecoration(labelText: 'Quantidade (g) ou Medida'),
                   ),
+                  const SizedBox(height: 24),
+                  _buildSectionHeader('Foto do Pet (Arraste e solte)'),
+                  _buildPhotoDropZone(),
+                  const SizedBox(height: 24),
+                  _buildSectionHeader('Vacinas Obrigatórias'),
+                  _buildVaccineChecklist(),
                 ],
               ),
             ),
@@ -513,6 +543,21 @@ class _EditPetDialogState extends State<EditPetDialog> {
                 } catch (_) {}
               }
 
+              // Prepare vaccinations
+              final updatedVaccinations = List<VaccinationInfo>.from(widget.pet?.vaccinations ?? []);
+              _vaccineStatus.forEach((name, isChecked) {
+                if (isChecked) {
+                  if (!updatedVaccinations.any((v) => v.name == name)) {
+                    updatedVaccinations.add(VaccinationInfo(
+                      name: name,
+                      date: DateTime.now(),
+                    ));
+                  }
+                } else {
+                  updatedVaccinations.removeWhere((v) => v.name == name);
+                }
+              });
+
               final newPet = PetModel(
                 id: widget.pet?.id ?? '',
                 tutorId: _selectedTutorId!,
@@ -530,6 +575,7 @@ class _EditPetDialogState extends State<EditPetDialog> {
                 foodBrand: _foodBrandController.text,
                 foodAmount: _foodAmountController.text,
                 feedingTimes: int.tryParse(_feedingTimesController.text) ?? 2,
+                vaccinations: updatedVaccinations,
                 veterinarianName: _vetNameController.text,
                 veterinarianPhone: _vetPhoneController.text,
                 photoUrl: _photoUrlController.text,
@@ -538,9 +584,17 @@ class _EditPetDialogState extends State<EditPetDialog> {
               );
 
               if (isEditing) {
-                context.read<PetsCubit>().updatePet(newPet);
+                context.read<PetsCubit>().updatePet(
+                  newPet,
+                  photoBytes: _selectedPhotoBytes,
+                  fileName: _selectedPhotoFileName,
+                );
               } else {
-                context.read<PetsCubit>().createPet(newPet);
+                context.read<PetsCubit>().createPet(
+                  newPet,
+                  photoBytes: _selectedPhotoBytes,
+                  fileName: _selectedPhotoFileName,
+                );
               }
               Navigator.pop(context);
             }
@@ -555,6 +609,7 @@ class _EditPetDialogState extends State<EditPetDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: 16),
         Text(
           title,
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
@@ -562,6 +617,83 @@ class _EditPetDialogState extends State<EditPetDialog> {
         const Divider(),
         const SizedBox(height: 8),
       ],
+    );
+  }
+
+  Widget _buildPhotoDropZone() {
+    return DropRegion(
+      formats: Formats.standardFormats,
+      onDropOver: (event) {
+        if (event.session.allowedOperations.contains(DropOperation.copy)) {
+          return DropOperation.copy;
+        } else {
+          return DropOperation.none;
+        }
+      },
+      onPerformDrop: (event) async {
+        final item = event.session.items.first;
+        final reader = item.dataReader;
+        
+        reader?.getFile(null, (file) async {
+          final bytes = await file.readAll();
+          setState(() {
+            _selectedPhotoBytes = bytes;
+            _selectedPhotoFileName = file.fileName;
+          });
+                });
+      },
+      child: Center(
+        child: Container(
+          height: 150,
+          width:MediaQuery.of(context).size.width * 0.2,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+          ),
+          child: Center(
+            child:
+                _selectedPhotoBytes != null
+                    ? Image.memory(_selectedPhotoBytes!, height: 140, fit: BoxFit.contain)
+                    : widget.pet?.photoUrl != null && widget.pet!.photoUrl!.isNotEmpty
+                    ? Image.network(widget.pet!.photoUrl!, height: 140, fit: BoxFit.contain)
+                    : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.cloud_upload_outlined, size: 48, color: Colors.grey.shade400),
+                        const SizedBox(height: 8),
+                        Text('Arraste uma foto aqui', style: TextStyle(color: Colors.grey.shade600)),
+                      ],
+                    ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVaccineChecklist() {
+    final species = _selectedSpecies ?? 'Cachorro';
+    final mandatory = _mandatoryVaccines[species] ?? [];
+
+    if (mandatory.isEmpty) {
+      return const Text('Nenhuma vacina obrigatória listada para esta espécie.');
+    }
+
+    return Column(
+      children:
+          mandatory.map((v) {
+            return CheckboxListTile(
+              title: Text(v),
+              value: _vaccineStatus[v] ?? false,
+              onChanged: (val) {
+                setState(() {
+                  _vaccineStatus[v] = val ?? false;
+                });
+              },
+              controlAffinity: ListTileControlAffinity.leading,
+              dense: true,
+            );
+          }).toList(),
     );
   }
 }

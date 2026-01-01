@@ -11,6 +11,7 @@ class PetRepository extends BaseRepository {
   /// Get all pets with filters
   Future<List<PetModel>> getAll({
     String? tutorId,
+    String? hotelId,
     String? species,
     bool? isActive,
     int limit = 50,
@@ -21,6 +22,10 @@ class PetRepository extends BaseRepository {
 
       if (tutorId != null) {
         query = query.eq('tutor_id', tutorId);
+      }
+
+      if (hotelId != null && hotelId.isNotEmpty) {
+        query = query.eq('hotel_id', hotelId);
       }
 
       if (species != null) {

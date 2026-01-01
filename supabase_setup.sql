@@ -3,9 +3,38 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ==================== TABLES ====================
 
+-- Hotels table
+CREATE TABLE IF NOT EXISTS hotels (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    address_street TEXT,
+    address_number TEXT,
+    address_city TEXT,
+    address_state TEXT,
+    address_zip TEXT,
+    phone TEXT,
+    email TEXT,
+    capacity INTEGER DEFAULT 20,
+    max_staff INTEGER DEFAULT 3,
+    business_hours JSONB DEFAULT '{}'::jsonb,
+    settings JSONB DEFAULT '{}'::jsonb,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Ensure hotels table has max_staff (if it existed before)
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='hotels' AND column_name='max_staff') THEN
+        ALTER TABLE hotels ADD COLUMN max_staff INTEGER DEFAULT 3;
+    END IF;
+END $$;
+
 -- Tutors (Clients)
 CREATE TABLE IF NOT EXISTS tutors (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    hotel_id UUID REFERENCES hotels(id) ON DELETE SET NULL,
     full_name TEXT NOT NULL,
     email TEXT NOT NULL,
     phone TEXT NOT NULL,
@@ -22,16 +51,29 @@ CREATE TABLE IF NOT EXISTS tutors (
     emergency_contact_phone TEXT,
     notes TEXT,
     documents JSONB DEFAULT '[]'::jsonb,
+    withdrawal_authorizations JSONB DEFAULT '[]'::jsonb,
     is_active BOOLEAN DEFAULT true,
     created_by UUID,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Ensure tutors table has hotel_id and withdrawal_authorizations
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tutors' AND column_name='hotel_id') THEN
+        ALTER TABLE tutors ADD COLUMN hotel_id UUID REFERENCES hotels(id) ON DELETE SET NULL;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tutors' AND column_name='withdrawal_authorizations') THEN
+        ALTER TABLE tutors ADD COLUMN withdrawal_authorizations JSONB DEFAULT '[]'::jsonb;
+    END IF;
+END $$;
+
 -- Pets
 CREATE TABLE IF NOT EXISTS pets (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tutor_id UUID REFERENCES tutors(id) ON DELETE CASCADE,
+    hotel_id UUID REFERENCES hotels(id) ON DELETE SET NULL,
     name TEXT NOT NULL,
     species TEXT NOT NULL,
     breed TEXT,
@@ -52,17 +94,50 @@ CREATE TABLE IF NOT EXISTS pets (
     medications JSONB DEFAULT '[]'::jsonb,
     veterinarian_name TEXT,
     veterinarian_phone TEXT,
+    behavioral_assessment TEXT,
+    exercise_needs TEXT,
+    diet_restrictions TEXT,
     is_active BOOLEAN DEFAULT true,
     created_by UUID,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Stays (Optional for now, but needed for foreign key if enforced)
+-- Ensure pets table has hotel_id and behavioral assessment fields
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='pets' AND column_name='hotel_id') THEN
+        ALTER TABLE pets ADD COLUMN hotel_id UUID REFERENCES hotels(id) ON DELETE SET NULL;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='pets' AND column_name='behavioral_assessment') THEN
+        ALTER TABLE pets ADD COLUMN behavioral_assessment TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='pets' AND column_name='exercise_needs') THEN
+        ALTER TABLE pets ADD COLUMN exercise_needs TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='pets' AND column_name='diet_restrictions') THEN
+        ALTER TABLE pets ADD COLUMN diet_restrictions TEXT;
+    END IF;
+END $$;
+
+-- Daily Logs (for Pátio module)
+CREATE TABLE IF NOT EXISTS daily_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    pet_id UUID REFERENCES pets(id) ON DELETE CASCADE,
+    hotel_id UUID REFERENCES hotels(id) ON DELETE CASCADE,
+    type TEXT NOT NULL, -- feeding, activity, incident, notes
+    title TEXT NOT NULL,
+    description TEXT,
+    created_by UUID,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Stays
 CREATE TABLE IF NOT EXISTS stays (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     pet_id UUID REFERENCES pets(id) ON DELETE CASCADE,
     tutor_id UUID REFERENCES tutors(id) ON DELETE CASCADE,
+    hotel_id UUID REFERENCES hotels(id) ON DELETE CASCADE,
     status TEXT NOT NULL, -- scheduled, checked_in, checked_out, cancelled
     scheduled_checkin TIMESTAMPTZ NOT NULL,
     scheduled_checkout TIMESTAMPTZ NOT NULL,
@@ -83,11 +158,20 @@ CREATE TABLE IF NOT EXISTS stays (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Ensure stays table has hotel_id
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='stays' AND column_name='hotel_id') THEN
+        ALTER TABLE stays ADD COLUMN hotel_id UUID REFERENCES hotels(id) ON DELETE CASCADE;
+    END IF;
+END $$;
+
 -- Routines (Appointments/Activities)
 CREATE TABLE IF NOT EXISTS routines (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    stay_id UUID, -- Can be null for standalone appointments
+    stay_id UUID,
     pet_id UUID REFERENCES pets(id) ON DELETE CASCADE,
+    hotel_id UUID REFERENCES hotels(id) ON DELETE CASCADE,
     type TEXT NOT NULL, -- feeding, medication, exercise, grooming, other
     title TEXT NOT NULL,
     description TEXT,
@@ -103,102 +187,44 @@ CREATE TABLE IF NOT EXISTS routines (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Ensure routines table has hotel_id
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='routines' AND column_name='hotel_id') THEN
+        ALTER TABLE routines ADD COLUMN hotel_id UUID REFERENCES hotels(id) ON DELETE CASCADE;
+    END IF;
+END $$;
 
 -- ==================== SEED DATA ====================
+
+-- Need to insert a default hotel for seed data if needed
+INSERT INTO hotels (id, name) VALUES ('00000000-0000-0000-0000-000000000000', 'Happy Pet Matriz') ON CONFLICT (id) DO NOTHING;
 
 DO $$
 DECLARE
     i INT;
     tutor_id UUID;
     pet_id UUID;
+    h_id UUID := '00000000-0000-0000-0000-000000000000';
     status TEXT;
     is_active BOOLEAN;
     appointment_status TEXT;
     service_type TEXT;
 BEGIN
-    -- Insert 50 Tutors
-    FOR i IN 1..50 LOOP
-        IF i % 4 = 0 THEN
-            is_active := false;
-        ELSE
-            is_active := true;
-        END IF;
-
-        INSERT INTO tutors (full_name, email, phone, is_active, created_at, updated_at)
-        VALUES (
-            'Client ' || i,
-            'client' || i || '@example.com',
-            '(11) 99999-' || (1000 + i),
-            is_active,
-            NOW(),
-            NOW()
-        );
-    END LOOP;
-
-    -- Insert 25 Pets (linking to random tutors)
-    FOR i IN 1..25 LOOP
-        -- Select a random tutor
-        SELECT id INTO tutor_id FROM tutors ORDER BY random() LIMIT 1;
-        
-        IF i % 3 = 0 THEN
-             -- "Checkup Due" simulation logic (handled by logic, but here we just insert basic data)
-             -- We can simulatesome expired vaccination if we want, but keeping it simple.
-             NULL; 
-        END IF;
-
-        INSERT INTO pets (
-            tutor_id, 
-            name, 
-            species, 
-            breed, 
-            birth_date, 
-            photo_url, 
-            is_active
-        )
-        VALUES (
-            tutor_id,
-            'Doggo ' || i,
-            'Dog',
-            'Golden Retriever',
-            CURRENT_DATE - (i + 2 || ' years')::INTERVAL,
-            'https://placedog.net/100/100?id=' || i,
-            true
-        );
-    END LOOP;
-
-    -- Insert 8 Appointments (Routines)
-    FOR i IN 1..8 LOOP
-        -- Select a random pet
-        SELECT id INTO pet_id FROM pets ORDER BY random() LIMIT 1;
-        
-        IF i % 2 = 0 THEN
-            service_type := 'grooming';
-        ELSE
-            service_type := 'other'; -- Checkup is not in enum, using 'other' with title 'Checkup'
-        END IF;
-
-        IF i <= 2 THEN
-            appointment_status := 'completed';
-        ELSE
-            appointment_status := 'pending'; -- 'Scheduled' maps to pending
-        END IF;
-
-        INSERT INTO routines (
-            pet_id,
-            type,
-            title,
-            scheduled_time,
-            date,
-            status
-        )
-        VALUES (
-            pet_id,
-            service_type,
-            CASE WHEN i % 2 = 0 THEN 'Grooming' ELSE 'Checkup' END,
-            TO_CHAR(NOW() + (i || ' hours')::INTERVAL, 'HH24:MI'),
-            CURRENT_DATE,
-            appointment_status
-        );
-    END LOOP;
+    -- Insert 5 Tutors for testing if table is empty
+    IF NOT EXISTS (SELECT 1 FROM tutors LIMIT 1) THEN
+        FOR i IN 1..5 LOOP
+            INSERT INTO tutors (hotel_id, full_name, email, phone, is_active, created_at, updated_at)
+            VALUES (
+                h_id,
+                'Client ' || i,
+                'client' || i || '@example.com',
+                '(11) 99999-' || (1000 + i),
+                true,
+                NOW(),
+                NOW()
+            );
+        END LOOP;
+    END IF;
 
 END $$;

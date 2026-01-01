@@ -41,6 +41,14 @@ class ResponsiveShell extends StatelessWidget {
         item: NavigationDestination(icon: Icon(Icons.pets_outlined), selectedIcon: Icon(Icons.pets), label: l10n.pets),
       ),
       (
+        route: '/patio',
+        item: NavigationDestination(
+          icon: Icon(Icons.tablet_android_outlined),
+          selectedIcon: Icon(Icons.tablet_android),
+          label: 'Pátio',
+        ),
+      ),
+      (
         route: '/appointments',
         item: NavigationDestination(
           icon: Icon(Icons.calendar_today_outlined),
@@ -59,6 +67,17 @@ class ResponsiveShell extends StatelessWidget {
     ];
 
     if (isAdminOrOwner) {
+      if (userRole == UserRole.admin) {
+        menuConfig.add((
+          route: '/admin/hotels',
+          item: NavigationDestination(
+            icon: Icon(Icons.corporate_fare_outlined),
+            selectedIcon: Icon(Icons.corporate_fare),
+            label: 'Gestão de Creches',
+          ),
+        ));
+      }
+
       menuConfig.add((
         route: '/settings',
         item: NavigationDestination(
@@ -67,7 +86,6 @@ class ResponsiveShell extends StatelessWidget {
           label: l10n.settings,
         ),
       ));
-      // Note: Hotel page is hidden from menu but available via route for admins, or we can add it here if needed.
     }
 
     final menuItems = menuConfig.map((e) => e.item).toList();

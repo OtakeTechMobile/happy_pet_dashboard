@@ -49,8 +49,8 @@ class _ClientsViewState extends State<ClientsView> {
           showDialog(
             context: context,
             builder: (dialogContext) => BlocProvider.value(
-              value: context.read<ClientsCubit>(), // Pass existing Cubit
-              child: const Dialog(), // No client implies creation
+              value: context.read<ClientsCubit>(),
+              child: const EditClientDialog(),
             ),
           );
         },

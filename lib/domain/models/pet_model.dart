@@ -24,6 +24,9 @@ class PetModel extends Equatable {
   final List<MedicationInfo> medications;
   final String? veterinarianName;
   final String? veterinarianPhone;
+  final String? behavioralAssessment; // Added
+  final String? exerciseNeeds; // Added
+  final String? dietRestrictions; // Added
   final bool isActive;
   final String? createdBy;
   final DateTime createdAt;
@@ -52,6 +55,9 @@ class PetModel extends Equatable {
     this.medications = const [],
     this.veterinarianName,
     this.veterinarianPhone,
+    this.behavioralAssessment,
+    this.exerciseNeeds,
+    this.dietRestrictions,
     this.isActive = true,
     this.createdBy,
     required this.createdAt,
@@ -121,6 +127,9 @@ class PetModel extends Equatable {
           <MedicationInfo>[],
       veterinarianName: json['veterinarian_name'] ?? '',
       veterinarianPhone: json['veterinarian_phone'] ?? '',
+      behavioralAssessment: json['behavioral_assessment'] ?? '',
+      exerciseNeeds: json['exercise_needs'] ?? '',
+      dietRestrictions: json['diet_restrictions'] ?? '',
       isActive: json['is_active'] ?? true,
       createdBy: json['created_by'] ?? '',
       createdAt: DateTime.parse(json['created_at'] ?? ''),
@@ -151,6 +160,9 @@ class PetModel extends Equatable {
       'medications': medications.map((m) => m.toJson()).toList(),
       'veterinarian_name': veterinarianName,
       'veterinarian_phone': veterinarianPhone,
+      'behavioral_assessment': behavioralAssessment,
+      'exercise_needs': exerciseNeeds,
+      'diet_restrictions': dietRestrictions,
       'is_active': isActive,
       'created_by': createdBy,
       'created_at': createdAt.toIso8601String(),
@@ -185,6 +197,9 @@ class PetModel extends Equatable {
     List<MedicationInfo>? medications,
     String? veterinarianName,
     String? veterinarianPhone,
+    String? behavioralAssessment,
+    String? exerciseNeeds,
+    String? dietRestrictions,
     bool? isActive,
     String? createdBy,
     DateTime? createdAt,
@@ -213,6 +228,9 @@ class PetModel extends Equatable {
       medications: medications ?? this.medications,
       veterinarianName: veterinarianName ?? this.veterinarianName,
       veterinarianPhone: veterinarianPhone ?? this.veterinarianPhone,
+      behavioralAssessment: behavioralAssessment ?? this.behavioralAssessment,
+      exerciseNeeds: exerciseNeeds ?? this.exerciseNeeds,
+      dietRestrictions: dietRestrictions ?? this.dietRestrictions,
       isActive: isActive ?? this.isActive,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
@@ -244,6 +262,9 @@ class PetModel extends Equatable {
     medications,
     veterinarianName,
     veterinarianPhone,
+    behavioralAssessment,
+    exerciseNeeds,
+    dietRestrictions,
     isActive,
     createdBy,
     createdAt,

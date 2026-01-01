@@ -7,14 +7,28 @@ class PersistenceService {
 
   static Future<void> initialize() async {
     _prefs = await SharedPreferences.getInstance();
-    log('Persistence initialized');
+    log('PersistenceService: Initialized');
   }
 
   static Future<void> saveThemeMode(bool isDark) async {
+    log('PersistenceService: Saving theme mode: ${isDark ? 'dark' : 'light'}');
     await _prefs.setBool('is_dark_mode', isDark);
   }
 
   static bool? getThemeMode() {
-    return _prefs.getBool('is_dark_mode');
+    final mode = _prefs.getBool('is_dark_mode');
+    log('PersistenceService: Loading theme mode: $mode');
+    return mode;
+  }
+
+  static Future<void> saveLocale(String languageCode) async {
+    log('PersistenceService: Saving locale: $languageCode');
+    await _prefs.setString('locale', languageCode);
+  }
+
+  static String? getLocale() {
+    final locale = _prefs.getString('locale');
+    log('PersistenceService: Loading locale: $locale');
+    return locale;
   }
 }

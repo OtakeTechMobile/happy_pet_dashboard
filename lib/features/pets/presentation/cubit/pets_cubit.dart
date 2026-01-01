@@ -51,22 +51,38 @@ class PetsCubit extends Cubit<PetsState> {
     }
   }
 
-  Future<void> createPet(PetModel pet) async {
+  Future<void> createPet(PetModel pet, {List<int>? photoBytes, String? fileName}) async {
     emit(PetsLoading());
     try {
-      await _repository.create(pet);
+      var createdPet = await _repository.create(pet);
+      
+      if (photoBytes != null && fileName != null) {
+        final photoUrl = await _repository.uploadPhoto(createdPet.id, photoBytes, fileName);
+        createdPet = createdPet.copyWith(photoUrl: photoUrl);
+        await _repository.update(createdPet);
+            }
+      
       await loadPets();
     } catch (e) {
+      log(e.toString());
       emit(PetsError(e.toString()));
     }
   }
 
-  Future<void> updatePet(PetModel pet) async {
+  Future<void> updatePet(PetModel pet, {List<int>? photoBytes, String? fileName}) async {
     emit(PetsLoading());
     try {
-      await _repository.update(pet);
+      var petToUpdate = pet;
+      
+      if (photoBytes != null && fileName != null) {
+        final photoUrl = await _repository.uploadPhoto(pet.id, photoBytes, fileName);
+        petToUpdate = pet.copyWith(photoUrl: photoUrl);
+            }
+      
+      await _repository.update(petToUpdate);
       await loadPets();
     } catch (e) {
+      log(e.toString());
       emit(PetsError(e.toString()));
     }
   }

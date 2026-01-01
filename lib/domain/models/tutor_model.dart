@@ -19,6 +19,7 @@ class TutorModel extends Equatable {
   final String? emergencyContactPhone;
   final String? notes;
   final List<DocumentInfo> documents;
+  final List<String> withdrawalAuthorizations; // Added
   final bool isActive;
   final String? createdBy;
   final DateTime createdAt;
@@ -42,6 +43,7 @@ class TutorModel extends Equatable {
     this.emergencyContactPhone,
     this.notes,
     this.documents = const [],
+    this.withdrawalAuthorizations = const [],
     this.isActive = true,
     this.createdBy,
     required this.createdAt,
@@ -85,6 +87,7 @@ class TutorModel extends Equatable {
               ?.map((doc) => DocumentInfo.fromJson(doc as Map<String, dynamic>))
               .toList() ??
           const [],
+      withdrawalAuthorizations: (json['withdrawal_authorizations'] as List<dynamic>?)?.cast<String>() ?? const [],
       isActive: json['is_active'] as bool? ?? true,
       createdBy: json['created_by'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -111,6 +114,7 @@ class TutorModel extends Equatable {
       'emergency_contact_phone': emergencyContactPhone,
       'notes': notes,
       'documents': documents.map((doc) => doc.toJson()).toList(),
+      'withdrawal_authorizations': withdrawalAuthorizations,
       'is_active': isActive,
       'created_by': createdBy,
       'created_at': createdAt.toIso8601String(),
@@ -136,6 +140,7 @@ class TutorModel extends Equatable {
     String? emergencyContactPhone,
     String? notes,
     List<DocumentInfo>? documents,
+    List<String>? withdrawalAuthorizations,
     bool? isActive,
     String? createdBy,
     DateTime? createdAt,
@@ -159,6 +164,7 @@ class TutorModel extends Equatable {
       emergencyContactPhone: emergencyContactPhone ?? this.emergencyContactPhone,
       notes: notes ?? this.notes,
       documents: documents ?? this.documents,
+      withdrawalAuthorizations: withdrawalAuthorizations ?? this.withdrawalAuthorizations,
       isActive: isActive ?? this.isActive,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
@@ -185,6 +191,7 @@ class TutorModel extends Equatable {
     emergencyContactPhone,
     notes,
     documents,
+    withdrawalAuthorizations,
     isActive,
     createdBy,
     createdAt,
