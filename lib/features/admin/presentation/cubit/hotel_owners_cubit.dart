@@ -2,7 +2,6 @@ import 'dart:developer';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/repositories/hotel_repository.dart';
@@ -16,13 +15,16 @@ abstract class HotelOwnersState extends Equatable {
 }
 
 class HotelOwnersInitial extends HotelOwnersState {}
+
 class HotelOwnersLoading extends HotelOwnersState {}
+
 class HotelOwnersLoaded extends HotelOwnersState {
   final List<HotelModel> hotels;
   const HotelOwnersLoaded(this.hotels);
   @override
   List<Object?> get props => [hotels];
 }
+
 class HotelOwnersError extends HotelOwnersState {
   final String message;
   const HotelOwnersError(this.message);
@@ -32,9 +34,9 @@ class HotelOwnersError extends HotelOwnersState {
 
 class HotelOwnersCubit extends Cubit<HotelOwnersState> {
   final HotelRepository _hotelRepository;
-  final AuthRepository _authRepository;
+  final AuthRepository authRepository;
 
-  HotelOwnersCubit(this._hotelRepository, this._authRepository) : super(HotelOwnersInitial());
+  HotelOwnersCubit(this._hotelRepository, this.authRepository) : super(HotelOwnersInitial());
 
   Future<void> loadHotels() async {
     emit(HotelOwnersLoading());
@@ -52,7 +54,7 @@ class HotelOwnersCubit extends Cubit<HotelOwnersState> {
     required String ownerName,
     required String ownerEmail,
     required String ownerPassword,
-    required List<String> staffNames,
+    required List<Map<String, String>> staffData,
   }) async {
     emit(HotelOwnersLoading());
     try {
@@ -66,27 +68,23 @@ class HotelOwnersCubit extends Cubit<HotelOwnersState> {
       );
       final createdHotel = await _hotelRepository.create(newHotel);
 
-      // 2. Ideally, we would use a Supabase Function (Edge Function) or Admin API to create users without logging out.
-      // Since this is a dashboard context, we might be limited by Supabase Client auth.
-      // For this implementation, we'll simulate the user creation in the database table 'users' directly
-      // if the RLS allows, or assume we have an admin service.
-      
-      // In a real production app with Supabase, you'd use service_role to create auth users.
-      // Here, we'll create the Owner profile.
-      const uuid = Uuid();
-      await _authRepository.createUserProfile(
-        userId: uuid.v4(), // Use valid UUID
+      // 2. Create the Owner (Auth + Profile).
+      await authRepository.signupNewUser(
         fullName: ownerName,
+        email: ownerEmail,
+        password: ownerPassword,
         role: UserRole.owner,
         hotelId: createdHotel.id,
       );
 
-      // 3. Create Staff profiles (limit 3)
-      final limitedStaff = staffNames.take(3).toList();
-      for (var name in limitedStaff) {
-        await _authRepository.createUserProfile(
-          userId: uuid.v4(), // Use valid UUID
-          fullName: name,
+      // 3. Create Staff (Auth + Profile) (limit 3)
+      final limitedStaff = staffData.take(3).toList();
+      for (var staff in limitedStaff) {
+        if (staff['email']?.isEmpty ?? true) continue;
+        await authRepository.signupNewUser(
+          fullName: staff['name']!,
+          email: staff['email']!,
+          password: staff['password']!,
           role: UserRole.staff,
           hotelId: createdHotel.id,
         );
@@ -96,6 +94,56 @@ class HotelOwnersCubit extends Cubit<HotelOwnersState> {
     } catch (e) {
       log(e.toString());
       emit(HotelOwnersError(e.toString()));
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getHotelStaff(String hotelId) async {
+    try {
+      return await _hotelRepository.getStaffMembers(hotelId);
+    } catch (e) {
+      log(e.toString());
+      return [];
+    }
+  }
+
+  Future<void> updateHotel(HotelModel hotel) async {
+    emit(HotelOwnersLoading());
+    try {
+      await _hotelRepository.update(hotel);
+      await loadHotels();
+    } catch (e) {
+      log(e.toString());
+      emit(HotelOwnersError(e.toString()));
+    }
+  }
+
+  Future<void> toggleHotelStatus(HotelModel hotel, bool isActive) async {
+    emit(HotelOwnersLoading());
+    try {
+      await _hotelRepository.update(hotel.copyWith(isActive: isActive));
+      await loadHotels();
+    } catch (e) {
+      log(e.toString());
+      emit(HotelOwnersError(e.toString()));
+    }
+  }
+
+  Future<void> signupStaff({
+    required String fullName,
+    required String email,
+    required String password,
+    required String hotelId,
+  }) async {
+    try {
+      await authRepository.signupNewUser(
+        fullName: fullName,
+        email: email,
+        password: password,
+        role: UserRole.staff,
+        hotelId: hotelId,
+      );
+    } catch (e) {
+      log('Error creating staff: $e');
     }
   }
 }

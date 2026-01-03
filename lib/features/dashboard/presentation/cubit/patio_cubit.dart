@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../data/repositories/daily_log_repository.dart';
@@ -8,15 +10,18 @@ import 'patio_state.dart';
 class PatioCubit extends Cubit<PatioState> {
   final PetRepository _petRepository;
   final DailyLogRepository _logRepository;
+  final String hotelId;
 
-  PatioCubit(this._petRepository, this._logRepository) : super(PatioInitial());
+  PatioCubit(this._petRepository, this._logRepository, this.hotelId) : super(PatioInitial());
 
-  Future<void> loadPatioData(String hotelId) async {
+  Future<void> loadPatioData() async {
     emit(PatioLoading());
     try {
       // Filter pets by hotel_id and status 'checked_in' (assuming isActive filter for now as per current DB state)
       final pets = await _petRepository.getAll(isActive: true, hotelId: hotelId);
       final logs = await _logRepository.getByHotelId(hotelId, date: DateTime.now());
+      log(pets.map((e) => e.hotelId).toString());
+      log(logs.map((e) => e.hotelId).toString());
 
       emit(PatioLoaded(pets, logs));
     } catch (e) {
@@ -24,10 +29,10 @@ class PatioCubit extends Cubit<PatioState> {
     }
   }
 
-  Future<void> addLog(DailyLogModel log, String hotelId) async {
+  Future<void> addLog(DailyLogModel log) async {
     try {
       await _logRepository.create(log);
-      await loadPatioData(hotelId);
+      await loadPatioData();
     } catch (e) {
       emit(PatioError(e.toString()));
     }

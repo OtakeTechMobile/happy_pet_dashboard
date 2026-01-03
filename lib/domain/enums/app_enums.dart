@@ -260,3 +260,25 @@ enum PaymentMethod {
     );
   }
 }
+
+/// Pet status enum
+enum PetStatus {
+  active,
+  inactive;
+
+  String get displayName {
+    switch (this) {
+      case PetStatus.active:
+        return 'Ativo';
+
+      case PetStatus.inactive:
+        return 'Inativo';
+    }
+  }
+
+  static PetStatus fromString(String value) {
+    return PetStatus.values.firstWhere((status) => status.name == value.toLowerCase(), orElse: () => PetStatus.active);
+  }
+
+  String toDbString() => name;
+}

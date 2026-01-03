@@ -11,10 +11,10 @@ class PetsCubit extends Cubit<PetsState> {
 
   PetsCubit(this._repository) : super(PetsInitial());
 
-  Future<void> loadPets() async {
+  Future<void> loadPets({String? hotelId}) async {
     emit(PetsLoading());
     try {
-      final pets = await _repository.getAll();
+      final pets = await _repository.getAll(hotelId: hotelId);
       pets.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
       emit(PetsLoaded(pets));
     } catch (e) {
@@ -23,23 +23,10 @@ class PetsCubit extends Cubit<PetsState> {
     }
   }
 
-  Future<void> searchPets(String query) async {
+  Future<void> searchPets(String query, {String? hotelId}) async {
     emit(PetsLoading());
     try {
-      // PetRepository has getAll(tutorId, species, isActive...). Not explicit search query for name?
-      // Checking PetRepository (step 12 view_file):
-      // Future<List<PetModel>> getAll({String? tutorId, String? species, bool? isActive...})
-      // It DOES NOT have a text search query for name.
-      // I should update PetRepository to support name search or filter locally.
-      // I'll filter locally for now to avoid modifying Repository interface recursively (and maybe breaking other things),
-      // OR I can modify repository. Modifying repository is better.
-      // But `PetRepository` was using `from('pets').select().eq...`.
-      // I'd need to add `.ilike('name', '%$query%')`.
-
-      // I'll do LOCAL filtering in the Cubit for now to be safe and fast,
-      // since I fetch all pets anyway (default limit 50).
-
-      final pets = await _repository.getAll();
+      final pets = await _repository.getAll(hotelId: hotelId);
       if (query.isNotEmpty) {
         final filtered = pets.where((p) => p.name.toLowerCase().contains(query.toLowerCase())).toList();
         emit(PetsLoaded(filtered));
@@ -55,13 +42,13 @@ class PetsCubit extends Cubit<PetsState> {
     emit(PetsLoading());
     try {
       var createdPet = await _repository.create(pet);
-      
+
       if (photoBytes != null && fileName != null) {
         final photoUrl = await _repository.uploadPhoto(createdPet.id, photoBytes, fileName);
         createdPet = createdPet.copyWith(photoUrl: photoUrl);
         await _repository.update(createdPet);
-            }
-      
+      }
+
       await loadPets();
     } catch (e) {
       log(e.toString());
@@ -73,12 +60,12 @@ class PetsCubit extends Cubit<PetsState> {
     emit(PetsLoading());
     try {
       var petToUpdate = pet;
-      
+
       if (photoBytes != null && fileName != null) {
         final photoUrl = await _repository.uploadPhoto(pet.id, photoBytes, fileName);
         petToUpdate = pet.copyWith(photoUrl: photoUrl);
-            }
-      
+      }
+
       await _repository.update(petToUpdate);
       await loadPets();
     } catch (e) {

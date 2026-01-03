@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 /// Tutor model representing pet owners/guardians
 class TutorModel extends Equatable {
   final String id;
+  final String? hotelId; // Added for multi-tenancy
   final String fullName;
   final String email;
   final String phone;
@@ -27,6 +28,7 @@ class TutorModel extends Equatable {
 
   const TutorModel({
     required this.id,
+    this.hotelId,
     required this.fullName,
     required this.email,
     required this.phone,
@@ -67,6 +69,7 @@ class TutorModel extends Equatable {
   factory TutorModel.fromJson(Map<String, dynamic> json) {
     return TutorModel(
       id: json['id'] ?? '',
+      hotelId: json['hotel_id'] as String?,
       fullName: json['full_name'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
@@ -96,8 +99,7 @@ class TutorModel extends Equatable {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
+    final map = <String, dynamic>{
       'full_name': fullName,
       'email': email,
       'phone': phone,
@@ -120,10 +122,16 @@ class TutorModel extends Equatable {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
+
+    if (id.isNotEmpty) map['id'] = id;
+    if (hotelId != null && hotelId!.isNotEmpty) map['hotel_id'] = hotelId;
+
+    return map;
   }
 
   TutorModel copyWith({
     String? id,
+    String? hotelId,
     String? fullName,
     String? email,
     String? phone,
@@ -148,6 +156,7 @@ class TutorModel extends Equatable {
   }) {
     return TutorModel(
       id: id ?? this.id,
+      hotelId: hotelId ?? this.hotelId,
       fullName: fullName ?? this.fullName,
       email: email ?? this.email,
       phone: phone ?? this.phone,
@@ -175,6 +184,7 @@ class TutorModel extends Equatable {
   @override
   List<Object?> get props => [
     id,
+    hotelId,
     fullName,
     email,
     phone,

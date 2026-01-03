@@ -1,9 +1,12 @@
 import 'package:equatable/equatable.dart';
 
+import '../enums/app_enums.dart';
+
 /// Pet model with medical records and photos
 class PetModel extends Equatable {
   final String id;
   final String tutorId;
+  final String? hotelId; // Added
   final String name;
   final String species;
   final String? breed;
@@ -28,6 +31,8 @@ class PetModel extends Equatable {
   final String? exerciseNeeds; // Added
   final String? dietRestrictions; // Added
   final bool isActive;
+  final PetStatus status; // Added
+  final List<PetStatusHistory> statusHistory; // Added
   final String? createdBy;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -35,6 +40,7 @@ class PetModel extends Equatable {
   const PetModel({
     required this.id,
     required this.tutorId,
+    this.hotelId,
     required this.name,
     required this.species,
     this.breed,
@@ -59,6 +65,8 @@ class PetModel extends Equatable {
     this.exerciseNeeds,
     this.dietRestrictions,
     this.isActive = true,
+    this.status = PetStatus.active,
+    this.statusHistory = const [],
     this.createdBy,
     required this.createdAt,
     required this.updatedAt,
@@ -98,6 +106,7 @@ class PetModel extends Equatable {
     return PetModel(
       id: json['id'] ?? '',
       tutorId: json['tutor_id'] ?? '',
+      hotelId: json['hotel_id'] as String?,
       name: json['name'] ?? '',
       species: json['species'] ?? '',
       breed: json['breed'] ?? '',
@@ -131,15 +140,20 @@ class PetModel extends Equatable {
       exerciseNeeds: json['exercise_needs'] ?? '',
       dietRestrictions: json['diet_restrictions'] ?? '',
       isActive: json['is_active'] ?? true,
-      createdBy: json['created_by'] ?? '',
+      status: PetStatus.fromString(json['status'] ?? 'active'),
+      statusHistory:
+          (json['status_history'] as List<dynamic>?)
+              ?.map((h) => PetStatusHistory.fromJson(h as Map<String, dynamic>))
+              .toList() ??
+          [],
+      createdBy: json['createdBy'] ?? '',
       createdAt: DateTime.parse(json['created_at'] ?? ''),
       updatedAt: DateTime.parse(json['updated_at'] ?? ''),
     );
   }
 
   Map<String, dynamic> toJson() {
-    final map = {
-      'tutor_id': tutorId,
+    final map = <String, dynamic>{
       'name': name,
       'species': species,
       'breed': breed,
@@ -164,19 +178,24 @@ class PetModel extends Equatable {
       'exercise_needs': exerciseNeeds,
       'diet_restrictions': dietRestrictions,
       'is_active': isActive,
+      'status': status.toDbString(),
+      'status_history': statusHistory.map((h) => h.toJson()).toList(),
       'created_by': createdBy,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
-    if (id.isNotEmpty) {
-      map['id'] = id;
-    }
+
+    if (id.isNotEmpty) map['id'] = id;
+    if (tutorId.isNotEmpty) map['tutor_id'] = tutorId;
+    if (hotelId != null && hotelId!.isNotEmpty) map['hotel_id'] = hotelId;
+
     return map;
   }
 
   PetModel copyWith({
     String? id,
     String? tutorId,
+    String? hotelId,
     String? name,
     String? species,
     String? breed,
@@ -201,6 +220,8 @@ class PetModel extends Equatable {
     String? exerciseNeeds,
     String? dietRestrictions,
     bool? isActive,
+    PetStatus? status,
+    List<PetStatusHistory>? statusHistory,
     String? createdBy,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -208,6 +229,7 @@ class PetModel extends Equatable {
     return PetModel(
       id: id ?? this.id,
       tutorId: tutorId ?? this.tutorId,
+      hotelId: hotelId ?? this.hotelId,
       name: name ?? this.name,
       species: species ?? this.species,
       breed: breed ?? this.breed,
@@ -232,6 +254,8 @@ class PetModel extends Equatable {
       exerciseNeeds: exerciseNeeds ?? this.exerciseNeeds,
       dietRestrictions: dietRestrictions ?? this.dietRestrictions,
       isActive: isActive ?? this.isActive,
+      status: status ?? this.status,
+      statusHistory: statusHistory ?? this.statusHistory,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -266,10 +290,36 @@ class PetModel extends Equatable {
     exerciseNeeds,
     dietRestrictions,
     isActive,
+    status,
+    statusHistory,
     createdBy,
     createdAt,
     updatedAt,
   ];
+}
+
+/// Pet status history entry
+class PetStatusHistory extends Equatable {
+  final PetStatus status;
+  final DateTime date;
+  final String? reason;
+
+  const PetStatusHistory({required this.status, required this.date, this.reason});
+
+  factory PetStatusHistory.fromJson(Map<String, dynamic> json) {
+    return PetStatusHistory(
+      status: PetStatus.fromString(json['status'] ?? 'active'),
+      date: DateTime.parse(json['date'] ?? DateTime.now().toIso8601String()),
+      reason: json['reason'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'status': status.toDbString(), 'date': date.toIso8601String(), 'reason': reason};
+  }
+
+  @override
+  List<Object?> get props => [status, date, reason];
 }
 
 /// Vaccination information embedded in pet

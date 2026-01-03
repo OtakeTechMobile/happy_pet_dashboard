@@ -48,16 +48,23 @@ class AppRouter {
         final userRole = _authCubit.state.userProfile?.role;
         final currentPath = state.uri.path;
 
-        // Restricted routes for admin/owner only
-        final restrictedRoutes = ['/settings', '/hotel'];
-        final isRestrictedRoute = restrictedRoutes.any((route) => currentPath.startsWith(route));
+        // Restricted routes for admin only
+        if (currentPath.startsWith('/admin/hotels')) {
+          if (userRole != UserRole.admin) return '/dashboard';
+        }
 
-        if (isRestrictedRoute) {
+        // Restricted routes for Admin/Owner only (NOT STAFF)
+        final ownerRestrictedRoutes = ['/hotel'];
+        final isOwnerRestricted = ownerRestrictedRoutes.any((route) => currentPath.startsWith(route));
+
+        if (isOwnerRestricted) {
           final hasAccess = userRole == UserRole.admin || userRole == UserRole.owner;
           if (!hasAccess) {
-            return '/dashboard'; // Redirect unauthorized access to dashboard
+            return '/dashboard';
           }
         }
+
+        // Settings is available for all but content might differ (handled in settings page)
       }
 
       return null;

@@ -7,6 +7,7 @@ class UserModel extends Equatable {
   final String id;
   final UserRole role;
   final String fullName;
+  final String? email;
   final String? phone;
   final String? avatarUrl;
   final String? hotelId;
@@ -18,6 +19,7 @@ class UserModel extends Equatable {
     required this.id,
     required this.role,
     required this.fullName,
+    this.email,
     this.phone,
     this.avatarUrl,
     this.hotelId,
@@ -31,12 +33,13 @@ class UserModel extends Equatable {
       id: json['id'] ?? '',
       role: UserRole.fromString(json['role'] ?? ''),
       fullName: json['full_name'] ?? '',
+      email: json['email'] ?? '',
       phone: json['phone'] ?? '',
       avatarUrl: json['avatar_url'] ?? '',
       hotelId: json['hotel_id'] ?? '',
       isActive: json['is_active'] ?? true,
-      createdAt: DateTime.parse(json['created_at'] ?? ''),
-      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toIso8601String()),
     );
   }
 
@@ -45,6 +48,7 @@ class UserModel extends Equatable {
       'id': id,
       'role': role.name,
       'full_name': fullName,
+      'email': email,
       'phone': phone,
       'avatar_url': avatarUrl,
       'hotel_id': hotelId,
@@ -58,6 +62,7 @@ class UserModel extends Equatable {
     String? id,
     UserRole? role,
     String? fullName,
+    String? email,
     String? phone,
     String? avatarUrl,
     String? hotelId,
@@ -69,6 +74,7 @@ class UserModel extends Equatable {
       id: id ?? this.id,
       role: role ?? this.role,
       fullName: fullName ?? this.fullName,
+      email: email ?? this.email,
       phone: phone ?? this.phone,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       hotelId: hotelId ?? this.hotelId,
@@ -79,5 +85,5 @@ class UserModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, role, fullName, phone, avatarUrl, hotelId, isActive, createdAt, updatedAt];
+  List<Object?> get props => [id, role, fullName, email, phone, avatarUrl, hotelId, isActive, createdAt, updatedAt];
 }

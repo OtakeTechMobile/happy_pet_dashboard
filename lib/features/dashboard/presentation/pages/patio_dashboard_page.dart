@@ -18,7 +18,7 @@ class PatioDashboardPage extends StatelessWidget {
     return BlocProvider(
       create: (context) {
         final hotelId = context.read<TenantCubit>().state.currentHotel?.id ?? '';
-        return PatioCubit(PetRepository(), DailyLogRepository())..loadPatioData(hotelId);
+        return PatioCubit(PetRepository(), DailyLogRepository(), hotelId)..loadPatioData();
       },
       child: const PatioDashboardView(),
     );
@@ -36,10 +36,7 @@ class PatioDashboardView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Modo Pátio'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => context.read<PatioCubit>().loadPatioData(hotelId),
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: () => context.read<PatioCubit>().loadPatioData()),
         ],
       ),
       body: BlocBuilder<PatioCubit, PatioState>(
@@ -113,34 +110,47 @@ class _PetActionCard extends StatelessWidget {
   }
 
   void _showLogOptions(BuildContext context) {
+    final patioCubit = context.read<PatioCubit>();
+    final authCubit = context.read<AuthCubit>();
+
     showModalBottomSheet(
       context: context,
       builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.restaurant, color: Colors.green),
-                title: const Text('Registrar Alimentação'),
-                onTap: () => _addQuickLog(context, LogType.feeding, 'Alimentação'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.directions_run, color: Colors.blue),
-                title: const Text('Registrar Atividade'),
-                onTap: () => _addQuickLog(context, LogType.activity, 'Atividade Física'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.report_problem, color: Colors.red),
-                title: const Text('Registrar Incidente'),
-                onTap: () => _addQuickLog(context, LogType.incident, 'Incidente'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.note, color: Colors.grey),
-                title: const Text('Nota Geral'),
-                onTap: () => _addQuickLog(context, LogType.notes, 'Observação'),
-              ),
-            ],
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: patioCubit),
+            BlocProvider.value(value: authCubit),
+          ],
+          child: Builder(
+            builder: (innerContext) {
+              return SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.restaurant, color: Colors.green),
+                      title: const Text('Registrar Alimentação'),
+                      onTap: () => _addQuickLog(innerContext, LogType.feeding, 'Alimentação'),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.directions_run, color: Colors.blue),
+                      title: const Text('Registrar Atividade'),
+                      onTap: () => _addQuickLog(innerContext, LogType.activity, 'Atividade Física'),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.report_problem, color: Colors.red),
+                      title: const Text('Registrar Incidente'),
+                      onTap: () => _addQuickLog(innerContext, LogType.incident, 'Incidente'),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.note, color: Colors.grey),
+                      title: const Text('Nota Geral'),
+                      onTap: () => _addQuickLog(innerContext, LogType.notes, 'Observação'),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         );
       },
@@ -159,7 +169,7 @@ class _PetActionCard extends StatelessWidget {
       createdAt: DateTime.now(),
     );
 
-    context.read<PatioCubit>().addLog(log, hotelId);
+    context.read<PatioCubit>().addLog(log);
     Navigator.pop(context);
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Registro de $title para ${pet.name} salvo!')));

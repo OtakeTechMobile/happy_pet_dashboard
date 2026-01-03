@@ -217,8 +217,10 @@ class _PetsViewState extends State<PetsView> {
 
 class EditPetDialog extends StatefulWidget {
   final PetModel? pet;
+  final String? tutorId;
+  final String? hotelId;
 
-  const EditPetDialog({super.key, this.pet});
+  const EditPetDialog({super.key, this.pet, this.tutorId, this.hotelId});
 
   @override
   State<EditPetDialog> createState() => _EditPetDialogState();
@@ -267,7 +269,7 @@ class _EditPetDialogState extends State<EditPetDialog> {
     super.initState();
     final pet = widget.pet;
 
-    _selectedTutorId = pet?.tutorId;
+    _selectedTutorId = pet?.tutorId ?? widget.tutorId;
     _selectedSpecies = pet?.species;
     if (_selectedSpecies == 'Dog') _selectedSpecies = 'Cachorro'; // Mapping legacy
     if (_selectedSpecies == 'Cat') _selectedSpecies = 'Gato';
@@ -304,7 +306,7 @@ class _EditPetDialogState extends State<EditPetDialog> {
     _vaccineStatus.clear();
     final species = _selectedSpecies ?? 'Cachorro';
     final mandatory = _mandatoryVaccines[species] ?? [];
-    
+
     for (final v in mandatory) {
       final hasVaccine = widget.pet?.vaccinations.any((pv) => pv.name == v) ?? false;
       _vaccineStatus[v] = hasVaccine;
@@ -548,10 +550,7 @@ class _EditPetDialogState extends State<EditPetDialog> {
               _vaccineStatus.forEach((name, isChecked) {
                 if (isChecked) {
                   if (!updatedVaccinations.any((v) => v.name == name)) {
-                    updatedVaccinations.add(VaccinationInfo(
-                      name: name,
-                      date: DateTime.now(),
-                    ));
+                    updatedVaccinations.add(VaccinationInfo(name: name, date: DateTime.now()));
                   }
                 } else {
                   updatedVaccinations.removeWhere((v) => v.name == name);
@@ -561,6 +560,7 @@ class _EditPetDialogState extends State<EditPetDialog> {
               final newPet = PetModel(
                 id: widget.pet?.id ?? '',
                 tutorId: _selectedTutorId!,
+                hotelId: widget.pet?.hotelId ?? widget.hotelId,
                 name: _nameController.text,
                 species: _selectedSpecies ?? 'Cachorro',
                 breed: _breedController.text,
@@ -633,38 +633,37 @@ class _EditPetDialogState extends State<EditPetDialog> {
       onPerformDrop: (event) async {
         final item = event.session.items.first;
         final reader = item.dataReader;
-        
+
         reader?.getFile(null, (file) async {
           final bytes = await file.readAll();
           setState(() {
             _selectedPhotoBytes = bytes;
             _selectedPhotoFileName = file.fileName;
           });
-                });
+        });
       },
       child: Center(
         child: Container(
           height: 150,
-          width:MediaQuery.of(context).size.width * 0.2,
+          width: MediaQuery.of(context).size.width * 0.2,
           decoration: BoxDecoration(
             color: Colors.grey.shade100,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
           ),
           child: Center(
-            child:
-                _selectedPhotoBytes != null
-                    ? Image.memory(_selectedPhotoBytes!, height: 140, fit: BoxFit.contain)
-                    : widget.pet?.photoUrl != null && widget.pet!.photoUrl!.isNotEmpty
-                    ? Image.network(widget.pet!.photoUrl!, height: 140, fit: BoxFit.contain)
-                    : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.cloud_upload_outlined, size: 48, color: Colors.grey.shade400),
-                        const SizedBox(height: 8),
-                        Text('Arraste uma foto aqui', style: TextStyle(color: Colors.grey.shade600)),
-                      ],
-                    ),
+            child: _selectedPhotoBytes != null
+                ? Image.memory(_selectedPhotoBytes!, height: 140, fit: BoxFit.contain)
+                : widget.pet?.photoUrl != null && widget.pet!.photoUrl!.isNotEmpty
+                ? Image.network(widget.pet!.photoUrl!, height: 140, fit: BoxFit.contain)
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.cloud_upload_outlined, size: 48, color: Colors.grey.shade400),
+                      const SizedBox(height: 8),
+                      Text('Arraste uma foto aqui', style: TextStyle(color: Colors.grey.shade600)),
+                    ],
+                  ),
           ),
         ),
       ),
@@ -680,20 +679,19 @@ class _EditPetDialogState extends State<EditPetDialog> {
     }
 
     return Column(
-      children:
-          mandatory.map((v) {
-            return CheckboxListTile(
-              title: Text(v),
-              value: _vaccineStatus[v] ?? false,
-              onChanged: (val) {
-                setState(() {
-                  _vaccineStatus[v] = val ?? false;
-                });
-              },
-              controlAffinity: ListTileControlAffinity.leading,
-              dense: true,
-            );
-          }).toList(),
+      children: mandatory.map((v) {
+        return CheckboxListTile(
+          title: Text(v),
+          value: _vaccineStatus[v] ?? false,
+          onChanged: (val) {
+            setState(() {
+              _vaccineStatus[v] = val ?? false;
+            });
+          },
+          controlAffinity: ListTileControlAffinity.leading,
+          dense: true,
+        );
+      }).toList(),
     );
   }
 }

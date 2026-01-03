@@ -40,17 +40,19 @@ class DailyLogModel extends Equatable {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      if (id.isNotEmpty) 'id': id,
-      'pet_id': petId,
-      'hotel_id': hotelId,
+    final map = <String, dynamic>{
       'type': type.name,
       'title': title,
       'description': description,
-      'photo_url': photoUrl,
       'created_by': createdBy,
       'created_at': createdAt.toIso8601String(),
     };
+
+    if (id.isNotEmpty) map['id'] = id;
+    if (petId.isNotEmpty) map['pet_id'] = petId;
+    if (hotelId.isNotEmpty) map['hotel_id'] = hotelId;
+
+    return map;
   }
 
   @override

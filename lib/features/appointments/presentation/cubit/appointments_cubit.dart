@@ -30,7 +30,7 @@ class AppointmentsCubit extends Cubit<AppointmentsState> {
       final tutors = await _tutorRepository.getAll();
 
       final viewModels = routines.map((routine) {
-        final pet = pets.firstWhere((p) => p.id == routine.petId, orElse: () => pets.isEmpty ? pets.first : pets[0]);
+        //   final pet = pets.firstWhere((p) => p.id == routine.petId, orElse: () => pets.isEmpty ? pets.first : pets[0]);
         // Fallback risky but ensures no crash if data inconsistent (e.g. mock data mismatch).
         // Better fallback:
         final petName = pets.any((p) => p.id == routine.petId)

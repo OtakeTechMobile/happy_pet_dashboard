@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/repositories/hotel_repository.dart';
+import '../../../../domain/models/hotel_model.dart';
 import '../cubit/hotel_owners_cubit.dart';
 import '../widgets/register_hotel_dialog.dart';
 
@@ -27,10 +28,7 @@ class HotelOwnersView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Gestão de Creches'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => context.read<HotelOwnersCubit>().loadHotels(),
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: () => context.read<HotelOwnersCubit>().loadHotels()),
         ],
       ),
       body: BlocBuilder<HotelOwnersCubit, HotelOwnersState>(
@@ -52,7 +50,10 @@ class HotelOwnersView extends StatelessWidget {
                     leading: const CircleAvatar(child: Icon(Icons.corporate_fare)),
                     title: Text(hotel.name),
                     subtitle: Text('Capacidade: ${hotel.capacity} | Limite Func.: ${hotel.maxStaff}'),
-                    trailing: const Icon(Icons.chevron_right),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit_outlined),
+                      onPressed: () => _showRegisterDialog(context, hotel: hotel),
+                    ),
                     onTap: () {
                       // Detailed view could be here
                     },
@@ -72,12 +73,12 @@ class HotelOwnersView extends StatelessWidget {
     );
   }
 
-  void _showRegisterDialog(BuildContext context) {
+  void _showRegisterDialog(BuildContext context, {HotelModel? hotel}) {
     showDialog(
       context: context,
       builder: (dialogContext) => BlocProvider.value(
         value: context.read<HotelOwnersCubit>(),
-        child: const RegisterHotelDialog(),
+        child: RegisterHotelDialog(hotel: hotel),
       ),
     );
   }

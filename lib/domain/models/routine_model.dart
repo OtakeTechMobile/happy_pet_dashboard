@@ -71,8 +71,7 @@ class RoutineModel extends Equatable {
   }
 
   Map<String, dynamic> toJson() {
-    final map = {
-      'pet_id': petId,
+    final map = <String, dynamic>{
       'type': type.name,
       'title': title,
       'description': description,
@@ -85,18 +84,13 @@ class RoutineModel extends Equatable {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
-    if (id.isNotEmpty) {
-      map['id'] = id;
-    }
-    if (stayId.isNotEmpty) {
-      map['stay_id'] = stayId;
-    }
-    if (assignedTo != null && assignedTo!.isNotEmpty) {
-      map['assigned_to'] = assignedTo;
-    }
-    if (completedBy != null && completedBy!.isNotEmpty) {
-      map['completed_by'] = completedBy;
-    }
+
+    if (id.isNotEmpty) map['id'] = id;
+    if (stayId.isNotEmpty) map['stay_id'] = stayId;
+    if (petId.isNotEmpty) map['pet_id'] = petId;
+    if (assignedTo != null && assignedTo!.isNotEmpty) map['assigned_to'] = assignedTo;
+    if (completedBy != null && completedBy!.isNotEmpty) map['completed_by'] = completedBy;
+
     return map;
   }
 

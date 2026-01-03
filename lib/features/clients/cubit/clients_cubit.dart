@@ -9,24 +9,20 @@ class ClientsCubit extends Cubit<ClientsState> {
 
   ClientsCubit(this._repository) : super(ClientsInitial());
 
-  Future<void> loadClients() async {
+  Future<void> loadClients({String? hotelId}) async {
     emit(ClientsLoading());
     try {
-      final clients = await _repository.getAll();
+      final clients = await _repository.getAll(hotelId: hotelId);
       emit(ClientsLoaded(clients));
     } catch (e) {
       emit(ClientsError(e.toString()));
     }
   }
 
-  Future<void> searchClients(String query) async {
+  Future<void> searchClients(String query, {String? hotelId}) async {
     emit(ClientsLoading());
     try {
-      // Assuming getTutors has a name filter or we filter locally.
-      // Checking TutorRepository: it has getTutors({String? query, ...}) ?
-      // I'll check the repository definition again.
-      // If not, I'll filter locally for now or update repository.
-      final clients = await _repository.getAll(searchQuery: query);
+      final clients = await _repository.getAll(searchQuery: query, hotelId: hotelId);
       emit(ClientsLoaded(clients));
     } catch (e) {
       emit(ClientsError(e.toString()));

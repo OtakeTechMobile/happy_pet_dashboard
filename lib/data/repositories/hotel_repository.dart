@@ -101,8 +101,21 @@ class HotelRepository extends BaseRepository {
   /// Get staff count for a hotel
   Future<int> getStaffCount(String hotelId) async {
     try {
-      final response = await from('users').select('id').eq('hotel_id', hotelId).eq('role', 'staff').count(CountOption.exact);
+      final response = await from(
+        'users',
+      ).select('id').eq('hotel_id', hotelId).eq('role', 'staff').count(CountOption.exact);
       return response.count;
+    } on Exception catch (error, stackTrace) {
+      handleError(error, stackTrace);
+    }
+  }
+
+  /// Get all staff members (Owners and Staff) for a hotel
+  Future<List<Map<String, dynamic>>> getStaffMembers(String hotelId) async {
+    try {
+      final response = await from('users').select().eq('hotel_id', hotelId).order('role');
+
+      return List<Map<String, dynamic>>.from(response);
     } on Exception catch (error, stackTrace) {
       handleError(error, stackTrace);
     }

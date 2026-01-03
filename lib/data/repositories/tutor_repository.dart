@@ -8,11 +8,21 @@ class TutorRepository extends BaseRepository {
   static const String tableName = 'tutors';
 
   /// Get all tutors with pagination
-  Future<List<TutorModel>> getAll({int limit = 50, int offset = 0, String? searchQuery, bool? isActive}) async {
+  Future<List<TutorModel>> getAll({
+    int limit = 50,
+    int offset = 0,
+    String? searchQuery,
+    String? hotelId,
+    bool? isActive,
+  }) async {
     try {
       dynamic query = from(tableName).select();
 
       // Apply filters first
+      if (hotelId != null && hotelId.isNotEmpty) {
+        query = query.eq('hotel_id', hotelId);
+      }
+
       if (searchQuery != null && searchQuery.isNotEmpty) {
         query = query.or('full_name.ilike.%$searchQuery%,email.ilike.%$searchQuery%,cpf.ilike.%$searchQuery%');
       }
@@ -68,8 +78,16 @@ class TutorRepository extends BaseRepository {
   /// Update tutor
   Future<TutorModel> update(TutorModel tutor) async {
     try {
+      final oldTutor = await getById(tutor.id);
       final response = await from(tableName).update(tutor.toJson()).eq('id', tutor.id).select().single();
-      return TutorModel.fromJson(response);
+      final updatedTutor = TutorModel.fromJson(response);
+
+      // Cascade hotel_id update to pets if hotel_id changed
+      if (oldTutor != null && oldTutor.hotelId != tutor.hotelId) {
+        await from('pets').update({'hotel_id': tutor.hotelId}).eq('tutor_id', tutor.id);
+      }
+
+      return updatedTutor;
     } on Exception catch (error, stackTrace) {
       handleError(error, stackTrace);
     }

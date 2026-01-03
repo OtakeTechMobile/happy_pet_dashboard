@@ -94,10 +94,7 @@ class StayModel extends Equatable {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'pet_id': petId,
-      'tutor_id': tutorId,
+    final map = <String, dynamic>{
       'status': status.toDbString(),
       'scheduled_checkin': scheduledCheckIn.toIso8601String(),
       'scheduled_checkout': scheduledCheckOut.toIso8601String(),
@@ -117,6 +114,12 @@ class StayModel extends Equatable {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
+
+    if (id.isNotEmpty) map['id'] = id;
+    if (petId.isNotEmpty) map['pet_id'] = petId;
+    if (tutorId.isNotEmpty) map['tutor_id'] = tutorId;
+
+    return map;
   }
 
   StayModel copyWith({

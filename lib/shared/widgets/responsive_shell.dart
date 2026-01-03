@@ -67,26 +67,28 @@ class ResponsiveShell extends StatelessWidget {
     ];
 
     if (isAdminOrOwner) {
+      // Hotel Management ONLY for Admins
       if (userRole == UserRole.admin) {
         menuConfig.add((
           route: '/admin/hotels',
-          item: NavigationDestination(
+          item: const NavigationDestination(
             icon: Icon(Icons.corporate_fare_outlined),
             selectedIcon: Icon(Icons.corporate_fare),
             label: 'Gestão de Creches',
           ),
         ));
       }
-
-      menuConfig.add((
-        route: '/settings',
-        item: NavigationDestination(
-          icon: Icon(Icons.settings_outlined),
-          selectedIcon: Icon(Icons.settings),
-          label: l10n.settings,
-        ),
-      ));
     }
+
+    // Settings for all
+    menuConfig.add((
+      route: '/settings',
+      item: NavigationDestination(
+        icon: const Icon(Icons.settings_outlined),
+        selectedIcon: const Icon(Icons.settings),
+        label: l10n.settings,
+      ),
+    ));
 
     final menuItems = menuConfig.map((e) => e.item).toList();
 
