@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 /// Tutor model representing pet owners/guardians
 class TutorModel extends Equatable {
   final String id;
+  final String? hotelId; // Added for multi-tenancy
   final String fullName;
   final String email;
   final String phone;
@@ -19,6 +20,7 @@ class TutorModel extends Equatable {
   final String? emergencyContactPhone;
   final String? notes;
   final List<DocumentInfo> documents;
+  final List<String> withdrawalAuthorizations; // Added
   final bool isActive;
   final String? createdBy;
   final DateTime createdAt;
@@ -26,6 +28,7 @@ class TutorModel extends Equatable {
 
   const TutorModel({
     required this.id,
+    this.hotelId,
     required this.fullName,
     required this.email,
     required this.phone,
@@ -42,6 +45,7 @@ class TutorModel extends Equatable {
     this.emergencyContactPhone,
     this.notes,
     this.documents = const [],
+    this.withdrawalAuthorizations = const [],
     this.isActive = true,
     this.createdBy,
     required this.createdAt,
@@ -64,27 +68,29 @@ class TutorModel extends Equatable {
 
   factory TutorModel.fromJson(Map<String, dynamic> json) {
     return TutorModel(
-      id: json['id'] as String,
-      fullName: json['full_name'] as String,
-      email: json['email'] as String,
-      phone: json['phone'] as String,
-      secondaryPhone: json['secondary_phone'] as String?,
-      cpf: json['cpf'] as String?,
-      addressStreet: json['address_street'] as String?,
-      addressNumber: json['address_number'] as String?,
-      addressComplement: json['address_complement'] as String?,
-      addressNeighborhood: json['address_neighborhood'] as String?,
-      addressCity: json['address_city'] as String?,
-      addressState: json['address_state'] as String?,
-      addressZip: json['address_zip'] as String?,
-      emergencyContactName: json['emergency_contact_name'] as String?,
-      emergencyContactPhone: json['emergency_contact_phone'] as String?,
-      notes: json['notes'] as String?,
+      id: json['id'] ?? '',
+      hotelId: json['hotel_id'] as String?,
+      fullName: json['full_name'] ?? '',
+      email: json['email'] ?? '',
+      phone: json['phone'] ?? '',
+      secondaryPhone: json['secondary_phone'] ?? '',
+      cpf: json['cpf'] ?? '',
+      addressStreet: json['address_street'] ?? '',
+      addressNumber: json['address_number'] ?? '',
+      addressComplement: json['address_complement'] ?? '',
+      addressNeighborhood: json['address_neighborhood'] ?? '',
+      addressCity: json['address_city'] ?? '',
+      addressState: json['address_state'] ?? '',
+      addressZip: json['address_zip'] ?? '',
+      emergencyContactName: json['emergency_contact_name'] ?? '',
+      emergencyContactPhone: json['emergency_contact_phone'] ?? '',
+      notes: json['notes'] ?? '',
       documents:
           (json['documents'] as List<dynamic>?)
               ?.map((doc) => DocumentInfo.fromJson(doc as Map<String, dynamic>))
               .toList() ??
           const [],
+      withdrawalAuthorizations: (json['withdrawal_authorizations'] as List<dynamic>?)?.cast<String>() ?? const [],
       isActive: json['is_active'] as bool? ?? true,
       createdBy: json['created_by'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -93,8 +99,7 @@ class TutorModel extends Equatable {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
+    final map = <String, dynamic>{
       'full_name': fullName,
       'email': email,
       'phone': phone,
@@ -111,15 +116,22 @@ class TutorModel extends Equatable {
       'emergency_contact_phone': emergencyContactPhone,
       'notes': notes,
       'documents': documents.map((doc) => doc.toJson()).toList(),
+      'withdrawal_authorizations': withdrawalAuthorizations,
       'is_active': isActive,
       'created_by': createdBy,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
+
+    if (id.isNotEmpty) map['id'] = id;
+    if (hotelId != null && hotelId!.isNotEmpty) map['hotel_id'] = hotelId;
+
+    return map;
   }
 
   TutorModel copyWith({
     String? id,
+    String? hotelId,
     String? fullName,
     String? email,
     String? phone,
@@ -136,6 +148,7 @@ class TutorModel extends Equatable {
     String? emergencyContactPhone,
     String? notes,
     List<DocumentInfo>? documents,
+    List<String>? withdrawalAuthorizations,
     bool? isActive,
     String? createdBy,
     DateTime? createdAt,
@@ -143,6 +156,7 @@ class TutorModel extends Equatable {
   }) {
     return TutorModel(
       id: id ?? this.id,
+      hotelId: hotelId ?? this.hotelId,
       fullName: fullName ?? this.fullName,
       email: email ?? this.email,
       phone: phone ?? this.phone,
@@ -159,6 +173,7 @@ class TutorModel extends Equatable {
       emergencyContactPhone: emergencyContactPhone ?? this.emergencyContactPhone,
       notes: notes ?? this.notes,
       documents: documents ?? this.documents,
+      withdrawalAuthorizations: withdrawalAuthorizations ?? this.withdrawalAuthorizations,
       isActive: isActive ?? this.isActive,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
@@ -169,6 +184,7 @@ class TutorModel extends Equatable {
   @override
   List<Object?> get props => [
     id,
+    hotelId,
     fullName,
     email,
     phone,
@@ -185,6 +201,7 @@ class TutorModel extends Equatable {
     emergencyContactPhone,
     notes,
     documents,
+    withdrawalAuthorizations,
     isActive,
     createdBy,
     createdAt,

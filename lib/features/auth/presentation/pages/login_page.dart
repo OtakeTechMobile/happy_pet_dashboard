@@ -16,8 +16,13 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _emailController = TextEditingController(text: 'otaketechmobile@gmail.com');
+  final _passwordController = TextEditingController(text: 'Test@ndo123');
+  // final _emailController = TextEditingController(text: 'marcosotake@gmail.com');
+  // final _passwordController = TextEditingController(text: '123456789');
+  
+  //joaosilva@email.com
+  //123456789
 
   @override
   void dispose() {
@@ -49,7 +54,9 @@ class _LoginPageState extends State<LoginPage> {
                         'Happy Pet Dashboard',
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
+                          color: Theme.of(context).brightness == Brightness.light
+                              ? Theme.of(context).primaryColor
+                              : null,
                         ),
                       ),
                       const SizedBox(height: 32),

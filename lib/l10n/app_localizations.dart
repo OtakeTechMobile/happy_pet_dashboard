@@ -334,6 +334,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Completed'**
   String get completed;
+
+  /// No description provided for @noClientsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No clients found'**
+  String get noClientsFound;
+
+  /// No description provided for @pageOutOfBounds.
+  ///
+  /// In en, this message translates to:
+  /// **'Page out of bounds'**
+  String get pageOutOfBounds;
+
+  /// No description provided for @active.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get active;
+
+  /// No description provided for @inactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get inactive;
+
+  /// No description provided for @newClient.
+  ///
+  /// In en, this message translates to:
+  /// **'New Client'**
+  String get newClient;
+
+  /// No description provided for @personalData.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Data'**
+  String get personalData;
+
+  /// No description provided for @fullNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name *'**
+  String get fullNameRequired;
+
+  /// No description provided for @requiredField.
+  ///
+  /// In en, this message translates to:
+  /// **'Required field'**
+  String get requiredField;
+
+  /// No description provided for @cpf.
+  ///
+  /// In en, this message translates to:
+  /// **'CPF'**
+  String get cpf;
+
+  /// No description provided for @emailRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Email *'**
+  String get emailRequired;
+
+  /// No description provided for @primaryPhoneRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary Phone *'**
+  String get primaryPhoneRequired;
+
+  /// No description provided for @secondaryPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Secondary Phone'**
+  String get secondaryPhone;
+
+  /// No description provided for @zipCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Zip Code'**
+  String get zipCode;
+
+  /// No description provided for @street.
+  ///
+  /// In en, this message translates to:
+  /// **'Street'**
+  String get street;
+
+  /// No description provided for @number.
+  ///
+  /// In en, this message translates to:
+  /// **'Number'**
+  String get number;
+
+  /// No description provided for @complement.
+  ///
+  /// In en, this message translates to:
+  /// **'Complement'**
+  String get complement;
+
+  /// No description provided for @neighborhood.
+  ///
+  /// In en, this message translates to:
+  /// **'Neighborhood'**
+  String get neighborhood;
+
+  /// No description provided for @city.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get city;
+
+  /// No description provided for @stateAbbr.
+  ///
+  /// In en, this message translates to:
+  /// **'State'**
+  String get stateAbbr;
+
+  /// No description provided for @emergencyContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Contact'**
+  String get emergencyContact;
+
+  /// No description provided for @contactName.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Name'**
+  String get contactName;
+
+  /// No description provided for @contactPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Phone'**
+  String get contactPhone;
+
+  /// No description provided for @observations.
+  ///
+  /// In en, this message translates to:
+  /// **'Observations'**
+  String get observations;
+
+  /// No description provided for @generalNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'General Notes'**
+  String get generalNotes;
+
+  /// No description provided for @confirmDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Delete'**
+  String get confirmDelete;
+
+  /// No description provided for @confirmDeleteClientMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this client?'**
+  String get confirmDeleteClientMessage;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @noAppointmentsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No appointments found'**
+  String get noAppointmentsFound;
+
+  /// No description provided for @newAppointment.
+  ///
+  /// In en, this message translates to:
+  /// **'New Appointment'**
+  String get newAppointment;
+
+  /// No description provided for @editAppointment.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Appointment'**
+  String get editAppointment;
+
+  /// No description provided for @noPetsFoundCreateFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'No pets found. Create a pet first.'**
+  String get noPetsFoundCreateFirst;
+
+  /// No description provided for @petRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pet *'**
+  String get petRequired;
+
+  /// No description provided for @selectPet.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a pet'**
+  String get selectPet;
+
+  /// No description provided for @titleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Title *'**
+  String get titleRequired;
+
+  /// No description provided for @description.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get description;
+
+  /// No description provided for @type.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get type;
+
+  /// No description provided for @datePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Date (dd/mm/yyyy)'**
+  String get datePlaceholder;
+
+  /// No description provided for @timePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Time (HH:mm)'**
+  String get timePlaceholder;
+
+  /// No description provided for @internalNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal Notes'**
+  String get internalNotes;
+
+  /// No description provided for @confirmDeleteAppointmentMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this appointment?'**
+  String get confirmDeleteAppointmentMessage;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

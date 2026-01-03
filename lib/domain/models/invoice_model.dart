@@ -55,26 +55,25 @@ class InvoiceModel extends Equatable {
 
   factory InvoiceModel.fromJson(Map<String, dynamic> json) {
     return InvoiceModel(
-      id: json['id'] as String,
-      stayId: json['stay_id'] as String?,
-      tutorId: json['tutor_id'] as String,
-      hotelId: json['hotel_id'] as String,
-      invoiceNumber: json['invoice_number'] as String,
-      status: InvoiceStatus.fromString(json['status'] as String),
-      issueDate: DateTime.parse(json['issue_date'] as String),
-      dueDate: DateTime.parse(json['due_date'] as String),
-      lineItems: (json['line_items'] as List<dynamic>?)
-              ?.map((item) => InvoiceLineItem.fromJson(item as Map<String, dynamic>))
-              .toList() ??
+      id: json['id'] ?? '',
+      stayId: json['stay_id'] ?? '',
+      tutorId: json['tutor_id'] ?? '',
+      hotelId: json['hotel_id'] ?? '',
+      invoiceNumber: json['invoice_number'] ?? '',
+      status: InvoiceStatus.fromString(json['status'] ?? ''),
+      issueDate: DateTime.parse(json['issue_date'] ?? ''),
+      dueDate: DateTime.parse(json['due_date'] ?? ''),
+      lineItems:
+          (json['line_items'] ?? [])?.map((item) => InvoiceLineItem.fromJson(item as Map<String, dynamic>)).toList() ??
           const [],
-      subtotal: (json['subtotal'] as num).toDouble(),
-      discountAmount: (json['discount_amount'] as num?)?.toDouble() ?? 0,
-      taxAmount: (json['tax_amount'] as num?)?.toDouble() ?? 0,
-      totalAmount: (json['total_amount'] as num).toDouble(),
-      notes: json['notes'] as String?,
-      createdBy: json['created_by'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      subtotal: (json['subtotal'] ?? 0).toDouble(),
+      discountAmount: (json['discount_amount'] ?? 0).toDouble(),
+      taxAmount: (json['tax_amount'] ?? 0).toDouble(),
+      totalAmount: (json['total_amount'] ?? 0).toDouble(),
+      notes: json['notes'] ?? '',
+      createdBy: json['created_by'] ?? '',
+      createdAt: DateTime.parse(json['created_at'] ?? ''),
+      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
     );
   }
 
@@ -142,24 +141,24 @@ class InvoiceModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        stayId,
-        tutorId,
-        hotelId,
-        invoiceNumber,
-        status,
-        issueDate,
-        dueDate,
-        lineItems,
-        subtotal,
-        discountAmount,
-        taxAmount,
-        totalAmount,
-        notes,
-        createdBy,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    stayId,
+    tutorId,
+    hotelId,
+    invoiceNumber,
+    status,
+    issueDate,
+    dueDate,
+    lineItems,
+    subtotal,
+    discountAmount,
+    taxAmount,
+    totalAmount,
+    notes,
+    createdBy,
+    createdAt,
+    updatedAt,
+  ];
 }
 
 /// Invoice line item embedded in invoice
@@ -178,20 +177,15 @@ class InvoiceLineItem extends Equatable {
 
   factory InvoiceLineItem.fromJson(Map<String, dynamic> json) {
     return InvoiceLineItem(
-      description: json['description'] as String,
-      quantity: json['quantity'] as int,
-      unitPrice: (json['unit_price'] as num).toDouble(),
-      total: (json['total'] as num).toDouble(),
+      description: json['description'] ?? '',
+      quantity: json['quantity'] ?? 0,
+      unitPrice: (json['unit_price'] ?? 0).toDouble(),
+      total: (json['total'] ?? 0).toDouble(),
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'description': description,
-      'quantity': quantity,
-      'unit_price': unitPrice,
-      'total': total,
-    };
+    return {'description': description, 'quantity': quantity, 'unit_price': unitPrice, 'total': total};
   }
 
   @override

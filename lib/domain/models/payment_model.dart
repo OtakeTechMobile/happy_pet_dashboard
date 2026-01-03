@@ -45,21 +45,21 @@ class PaymentModel extends Equatable {
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) {
     return PaymentModel(
-      id: json['id'] as String,
-      invoiceId: json['invoice_id'] as String,
-      tutorId: json['tutor_id'] as String,
-      amount: (json['amount'] as num).toDouble(),
-      paymentMethod: PaymentMethod.fromString(json['payment_method'] as String),
-      paymentDate: DateTime.parse(json['payment_date'] as String),
-      stripePaymentIntentId: json['stripe_payment_intent_id'] as String?,
-      stripeChargeId: json['stripe_charge_id'] as String?,
-      pixQrCode: json['pix_qr_code'] as String?,
-      boletoUrl: json['boleto_url'] as String?,
-      status: PaymentStatus.fromString(json['status'] as String),
-      notes: json['notes'] as String?,
-      createdBy: json['created_by'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      id: json['id'] ?? '',
+      invoiceId: json['invoice_id'] ?? '',
+      tutorId: json['tutor_id'] ?? '',
+      amount: (json['amount'] ?? 0).toDouble(),
+      paymentMethod: PaymentMethod.fromString(json['payment_method'] ?? ''),
+      paymentDate: DateTime.parse(json['payment_date'] ?? ''),
+      stripePaymentIntentId: json['stripe_payment_intent_id'] ?? '',
+      stripeChargeId: json['stripe_charge_id'] ?? '',
+      pixQrCode: json['pix_qr_code'] ?? '',
+      boletoUrl: json['boleto_url'] ?? '',
+      status: PaymentStatus.fromString(json['status'] ?? ''),
+      notes: json['notes'] ?? '',
+      createdBy: json['created_by'] ?? '',
+      createdAt: DateTime.parse(json['created_at'] ?? ''),
+      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
     );
   }
 
@@ -121,22 +121,22 @@ class PaymentModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        invoiceId,
-        tutorId,
-        amount,
-        paymentMethod,
-        paymentDate,
-        stripePaymentIntentId,
-        stripeChargeId,
-        pixQrCode,
-        boletoUrl,
-        status,
-        notes,
-        createdBy,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    invoiceId,
+    tutorId,
+    amount,
+    paymentMethod,
+    paymentDate,
+    stripePaymentIntentId,
+    stripeChargeId,
+    pixQrCode,
+    boletoUrl,
+    status,
+    notes,
+    createdBy,
+    createdAt,
+    updatedAt,
+  ];
 }
 
 /// Payment status enum

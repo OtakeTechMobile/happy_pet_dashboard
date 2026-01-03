@@ -59,6 +59,9 @@ dependencies:
   
   flutter_web_plugins:
     sdk: flutter 
+  brasil_fields: ^1.18.0
+  http: ^1.6.0
+  super_drag_and_drop: ^0.9.1
 
 
 dev_dependencies:

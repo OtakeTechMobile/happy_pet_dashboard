@@ -18,10 +18,7 @@ class SupabaseService {
         return;
       }
 
-      await Supabase.initialize(
-        url: supabaseUrl,
-        anonKey: supabaseAnonKey,
-      );
+      await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
 
       log('Supabase initialized successfully');
     } catch (e) {
@@ -29,11 +26,14 @@ class SupabaseService {
     }
   }
 
+  static String? get supabaseUrl => dotenv.env['SUPABASE_URL'];
+  static String? get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'];
+
   static SupabaseClient get client => Supabase.instance.client;
-  
+
   static SupabaseQueryBuilder from(String table) => client.from(table);
-  
+
   static SupabaseStorageClient get storage => client.storage;
-  
+
   static GoTrueClient get auth => client.auth;
 }

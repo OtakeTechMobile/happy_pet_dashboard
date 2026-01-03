@@ -1,9 +1,12 @@
 import 'package:equatable/equatable.dart';
 
+import '../enums/app_enums.dart';
+
 /// Pet model with medical records and photos
 class PetModel extends Equatable {
   final String id;
   final String tutorId;
+  final String? hotelId; // Added
   final String name;
   final String species;
   final String? breed;
@@ -24,7 +27,12 @@ class PetModel extends Equatable {
   final List<MedicationInfo> medications;
   final String? veterinarianName;
   final String? veterinarianPhone;
+  final String? behavioralAssessment; // Added
+  final String? exerciseNeeds; // Added
+  final String? dietRestrictions; // Added
   final bool isActive;
+  final PetStatus status; // Added
+  final List<PetStatusHistory> statusHistory; // Added
   final String? createdBy;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -32,6 +40,7 @@ class PetModel extends Equatable {
   const PetModel({
     required this.id,
     required this.tutorId,
+    this.hotelId,
     required this.name,
     required this.species,
     this.breed,
@@ -52,7 +61,12 @@ class PetModel extends Equatable {
     this.medications = const [],
     this.veterinarianName,
     this.veterinarianPhone,
+    this.behavioralAssessment,
+    this.exerciseNeeds,
+    this.dietRestrictions,
     this.isActive = true,
+    this.status = PetStatus.active,
+    this.statusHistory = const [],
     this.createdBy,
     required this.createdAt,
     required this.updatedAt,
@@ -90,47 +104,56 @@ class PetModel extends Equatable {
 
   factory PetModel.fromJson(Map<String, dynamic> json) {
     return PetModel(
-      id: json['id'] as String,
-      tutorId: json['tutor_id'] as String,
-      name: json['name'] as String,
-      species: json['species'] as String,
-      breed: json['breed'] as String?,
+      id: json['id'] ?? '',
+      tutorId: json['tutor_id'] ?? '',
+      hotelId: json['hotel_id'] as String?,
+      name: json['name'] ?? '',
+      species: json['species'] ?? '',
+      breed: json['breed'] ?? '',
       gender: json['gender'] as String?,
-      birthDate: json['birth_date'] != null ? DateTime.parse(json['birth_date'] as String) : null,
-      weight: (json['weight'] as num?)?.toDouble(),
-      microchipNumber: json['microchip_number'] as String?,
-      color: json['color'] as String?,
-      photoUrl: json['photo_url'] as String?,
-      photos: (json['photos'] as List<dynamic>?)?.cast<String>() ?? const [],
-      medicalConditions: json['medical_conditions'] as String?,
-      allergies: json['allergies'] as String?,
-      specialNeeds: json['special_needs'] as String?,
-      foodBrand: json['food_brand'] as String?,
-      foodAmount: json['food_amount'] as String?,
-      feedingTimes: json['feeding_times'] as int? ?? 2,
+      birthDate: json['birth_date'] != null ? DateTime.parse(json['birth_date'] ?? '') : null,
+      weight: (json['weight'] ?? 0)?.toDouble(),
+      microchipNumber: json['microchip_number'] ?? '',
+      color: json['color'] ?? '',
+      photoUrl: json['photo_url'] ?? '',
+      photos: (json['photos'] ?? <String>[]).cast<String>(),
+      medicalConditions: json['medical_conditions'] ?? '',
+      allergies: json['allergies'] ?? '',
+      specialNeeds: json['special_needs'] ?? '',
+      foodBrand: json['food_brand'] ?? '',
+      foodAmount: json['food_amount'] ?? '',
+      feedingTimes: json['feeding_times'] ?? 2,
       vaccinations:
           (json['vaccinations'] as List<dynamic>?)
               ?.map((v) => VaccinationInfo.fromJson(v as Map<String, dynamic>))
               .toList() ??
-          const [],
+          <VaccinationInfo>[],
+
       medications:
           (json['medications'] as List<dynamic>?)
               ?.map((m) => MedicationInfo.fromJson(m as Map<String, dynamic>))
               .toList() ??
-          const [],
-      veterinarianName: json['veterinarian_name'] as String?,
-      veterinarianPhone: json['veterinarian_phone'] as String?,
-      isActive: json['is_active'] as bool? ?? true,
-      createdBy: json['created_by'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+          <MedicationInfo>[],
+      veterinarianName: json['veterinarian_name'] ?? '',
+      veterinarianPhone: json['veterinarian_phone'] ?? '',
+      behavioralAssessment: json['behavioral_assessment'] ?? '',
+      exerciseNeeds: json['exercise_needs'] ?? '',
+      dietRestrictions: json['diet_restrictions'] ?? '',
+      isActive: json['is_active'] ?? true,
+      status: PetStatus.fromString(json['status'] ?? 'active'),
+      statusHistory:
+          (json['status_history'] as List<dynamic>?)
+              ?.map((h) => PetStatusHistory.fromJson(h as Map<String, dynamic>))
+              .toList() ??
+          [],
+      createdBy: json['createdBy'] ?? '',
+      createdAt: DateTime.parse(json['created_at'] ?? ''),
+      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'tutor_id': tutorId,
+    final map = <String, dynamic>{
       'name': name,
       'species': species,
       'breed': breed,
@@ -151,16 +174,28 @@ class PetModel extends Equatable {
       'medications': medications.map((m) => m.toJson()).toList(),
       'veterinarian_name': veterinarianName,
       'veterinarian_phone': veterinarianPhone,
+      'behavioral_assessment': behavioralAssessment,
+      'exercise_needs': exerciseNeeds,
+      'diet_restrictions': dietRestrictions,
       'is_active': isActive,
+      'status': status.toDbString(),
+      'status_history': statusHistory.map((h) => h.toJson()).toList(),
       'created_by': createdBy,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
+
+    if (id.isNotEmpty) map['id'] = id;
+    if (tutorId.isNotEmpty) map['tutor_id'] = tutorId;
+    if (hotelId != null && hotelId!.isNotEmpty) map['hotel_id'] = hotelId;
+
+    return map;
   }
 
   PetModel copyWith({
     String? id,
     String? tutorId,
+    String? hotelId,
     String? name,
     String? species,
     String? breed,
@@ -181,7 +216,12 @@ class PetModel extends Equatable {
     List<MedicationInfo>? medications,
     String? veterinarianName,
     String? veterinarianPhone,
+    String? behavioralAssessment,
+    String? exerciseNeeds,
+    String? dietRestrictions,
     bool? isActive,
+    PetStatus? status,
+    List<PetStatusHistory>? statusHistory,
     String? createdBy,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -189,6 +229,7 @@ class PetModel extends Equatable {
     return PetModel(
       id: id ?? this.id,
       tutorId: tutorId ?? this.tutorId,
+      hotelId: hotelId ?? this.hotelId,
       name: name ?? this.name,
       species: species ?? this.species,
       breed: breed ?? this.breed,
@@ -209,7 +250,12 @@ class PetModel extends Equatable {
       medications: medications ?? this.medications,
       veterinarianName: veterinarianName ?? this.veterinarianName,
       veterinarianPhone: veterinarianPhone ?? this.veterinarianPhone,
+      behavioralAssessment: behavioralAssessment ?? this.behavioralAssessment,
+      exerciseNeeds: exerciseNeeds ?? this.exerciseNeeds,
+      dietRestrictions: dietRestrictions ?? this.dietRestrictions,
       isActive: isActive ?? this.isActive,
+      status: status ?? this.status,
+      statusHistory: statusHistory ?? this.statusHistory,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -240,11 +286,40 @@ class PetModel extends Equatable {
     medications,
     veterinarianName,
     veterinarianPhone,
+    behavioralAssessment,
+    exerciseNeeds,
+    dietRestrictions,
     isActive,
+    status,
+    statusHistory,
     createdBy,
     createdAt,
     updatedAt,
   ];
+}
+
+/// Pet status history entry
+class PetStatusHistory extends Equatable {
+  final PetStatus status;
+  final DateTime date;
+  final String? reason;
+
+  const PetStatusHistory({required this.status, required this.date, this.reason});
+
+  factory PetStatusHistory.fromJson(Map<String, dynamic> json) {
+    return PetStatusHistory(
+      status: PetStatus.fromString(json['status'] ?? 'active'),
+      date: DateTime.parse(json['date'] ?? DateTime.now().toIso8601String()),
+      reason: json['reason'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'status': status.toDbString(), 'date': date.toIso8601String(), 'reason': reason};
+  }
+
+  @override
+  List<Object?> get props => [status, date, reason];
 }
 
 /// Vaccination information embedded in pet
@@ -263,10 +338,10 @@ class VaccinationInfo extends Equatable {
 
   factory VaccinationInfo.fromJson(Map<String, dynamic> json) {
     return VaccinationInfo(
-      name: json['name'] as String,
-      date: DateTime.parse(json['date'] as String),
-      nextDate: json['next_date'] != null ? DateTime.parse(json['next_date'] as String) : null,
-      documentUrl: json['document_url'] as String?,
+      name: json['name'] ?? '',
+      date: DateTime.parse(json['date'] ?? ''),
+      nextDate: json['next_date'] != null ? DateTime.parse(json['next_date'] ?? '') : null,
+      documentUrl: json['document_url'] ?? '',
     );
   }
 

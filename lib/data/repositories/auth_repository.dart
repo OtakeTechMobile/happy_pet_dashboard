@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:happy_pet_dashboard/core/services/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/enums/app_enums.dart';
@@ -12,20 +13,12 @@ class AuthRepository extends BaseRepository {
 
   /// Sign in with email and password
   Future<AuthResponse> signInWithEmail(String email, String password) async {
-    log(email.length.toString());
-    log(email);
-    log(password.length.toString());
-    log(password);
-    log(email.trim().length.toString());
-    log(email.trim());
-    log(password.trim().length.toString());
-    log(password.trim());
+    log('signInWithEmail: $email');
+    log('signInWithEmail: $password');
     try {
       final response = await auth.signInWithPassword(email: email, password: password.trim());
-      log(response.user?.email?.toString() ?? '');
       return response;
     } on Exception catch (error, stackTrace) {
-      log(error.toString());
       handleError(error, stackTrace);
     }
   }
@@ -89,6 +82,7 @@ class AuthRepository extends BaseRepository {
     required String userId,
     required String fullName,
     required UserRole role,
+    String? email,
     String? phone,
     String? hotelId,
   }) async {
@@ -96,6 +90,7 @@ class AuthRepository extends BaseRepository {
       final userProfile = {
         'id': userId,
         'full_name': fullName,
+        'email': email,
         'role': role.name,
         'phone': phone,
         'hotel_id': hotelId,
@@ -104,6 +99,47 @@ class AuthRepository extends BaseRepository {
 
       final response = await from('users').insert(userProfile).select().single();
       return UserModel.fromJson(response);
+    } on Exception catch (error, stackTrace) {
+      handleError(error, stackTrace);
+    }
+  }
+
+  /// Signup a new user (Auth + Profile) without disrupting current session.
+  /// Note: This uses a secondary client to avoid session conflicts.
+  Future<UserModel> signupNewUser({
+    required String fullName,
+    required String email,
+    required String password,
+    required UserRole role,
+    String? hotelId,
+  }) async {
+    try {
+      // Create a temporary client to perform signup
+      // We use the same URL and Anon Key from the global instance
+      final tempClient = SupabaseClient(
+        SupabaseService.supabaseUrl!,
+        SupabaseService.supabaseAnonKey!,
+        authOptions: const AuthClientOptions(authFlowType: AuthFlowType.implicit),
+      );
+
+      final authResponse = await tempClient.auth.signUp(
+        email: email.trim(),
+        password: password.trim(),
+        data: {'full_name': fullName},
+      );
+
+      if (authResponse.user == null) {
+        throw RepositoryException('Failed to create auth user');
+      }
+
+      // Create the profile using the MAIN client (authenticated as admin)
+      return await createUserProfile(
+        userId: authResponse.user!.id,
+        fullName: fullName,
+        email: email,
+        role: role,
+        hotelId: hotelId,
+      );
     } on Exception catch (error, stackTrace) {
       handleError(error, stackTrace);
     }

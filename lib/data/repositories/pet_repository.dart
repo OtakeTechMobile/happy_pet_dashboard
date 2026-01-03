@@ -1,5 +1,7 @@
+import 'dart:developer';
 import 'dart:typed_data';
 
+import '../../domain/enums/app_enums.dart';
 import '../../domain/models/pet_model.dart';
 import 'base_repository.dart';
 
@@ -10,6 +12,7 @@ class PetRepository extends BaseRepository {
   /// Get all pets with filters
   Future<List<PetModel>> getAll({
     String? tutorId,
+    String? hotelId,
     String? species,
     bool? isActive,
     int limit = 50,
@@ -20,6 +23,10 @@ class PetRepository extends BaseRepository {
 
       if (tutorId != null) {
         query = query.eq('tutor_id', tutorId);
+      }
+
+      if (hotelId != null && hotelId.isNotEmpty) {
+        query = query.eq('hotel_id', hotelId);
       }
 
       if (species != null) {
@@ -74,9 +81,14 @@ class PetRepository extends BaseRepository {
   /// Create new pet
   Future<PetModel> create(PetModel pet) async {
     try {
-      final response = await from(tableName).insert(pet.toJson()).select().single();
+      final json = pet.toJson();
+      if (json['id'] == '') {
+        json.remove('id');
+      }
+      final response = await from(tableName).insert(json).select().single();
       return PetModel.fromJson(response);
     } on Exception catch (error, stackTrace) {
+      log(error.toString());
       handleError(error, stackTrace);
     }
   }
@@ -91,13 +103,30 @@ class PetRepository extends BaseRepository {
     }
   }
 
-  /// Delete pet (soft delete)
-  Future<void> delete(String id) async {
+  /// Delete pet (status change)
+  Future<void> delete(String id, {PetStatus status = PetStatus.inactive, String? reason}) async {
     try {
-      await from(tableName).update({'is_active': false}).eq('id', id);
+      final pet = await getById(id);
+      if (pet == null) return;
+
+      final newHistory = List<PetStatusHistory>.from(pet.statusHistory);
+      newHistory.add(PetStatusHistory(status: status, date: DateTime.now(), reason: reason));
+
+      await from(tableName)
+          .update({
+            'is_active': status == PetStatus.active,
+            'status': status.toDbString(),
+            'status_history': newHistory.map((h) => h.toJson()).toList(),
+          })
+          .eq('id', id);
     } on Exception catch (error, stackTrace) {
       handleError(error, stackTrace);
     }
+  }
+
+  /// Update pet status with history
+  Future<void> updatePetStatus(String id, PetStatus status, {String? reason}) async {
+    await delete(id, status: status, reason: reason);
   }
 
   /// Upload pet photo to Supabase Storage

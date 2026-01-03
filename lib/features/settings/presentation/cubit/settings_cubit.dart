@@ -7,15 +7,20 @@ import '../../../../core/services/persistence_service.dart';
 part 'settings_state.dart';
 
 class SettingsCubit extends Cubit<SettingsState> {
-  SettingsCubit() : super(const SettingsState(themeMode: ThemeMode.system, locale: Locale('pt')));
+  SettingsCubit() : super(_initialState);
+
+  static SettingsState get _initialState {
+    final isDark = PersistenceService.getThemeMode();
+    final themeMode = isDark == null ? ThemeMode.system : (isDark ? ThemeMode.dark : ThemeMode.light);
+
+    final localeCode = PersistenceService.getLocale();
+    final locale = localeCode != null ? Locale(localeCode) : const Locale('pt');
+
+    return SettingsState(themeMode: themeMode, locale: locale);
+  }
 
   Future<void> loadSettings() async {
-    final isDark = PersistenceService.getThemeMode();
-    final themeMode = isDark == true ? ThemeMode.dark : ThemeMode.light;
-
-    // TODO: Load locale from persistence
-
-    emit(state.copyWith(themeMode: themeMode));
+    // Already handled in constructor
   }
 
   Future<void> toggleTheme(bool isDark) async {
@@ -24,7 +29,7 @@ class SettingsCubit extends Cubit<SettingsState> {
   }
 
   void setLocale(Locale locale) {
-    // TODO: Save locale to persistence
+    PersistenceService.saveLocale(locale.languageCode);
     emit(state.copyWith(locale: locale));
   }
 }

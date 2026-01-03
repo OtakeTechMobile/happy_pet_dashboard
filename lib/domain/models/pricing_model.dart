@@ -26,15 +26,15 @@ class PricingPackageModel extends Equatable {
 
   factory PricingPackageModel.fromJson(Map<String, dynamic> json) {
     return PricingPackageModel(
-      id: json['id'] as String,
-      hotelId: json['hotel_id'] as String,
-      name: json['name'] as String,
-      type: PricingType.fromString(json['type'] as String),
-      price: (json['price'] as num).toDouble(),
-      description: json['description'] as String?,
-      isActive: json['is_active'] as bool? ?? true,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      id: json['id'] ?? '',
+      hotelId: json['hotel_id'] ?? '',
+      name: json['name'] ?? '',
+      type: PricingType.fromString(json['type'] ?? ''),
+      price: (json['price'] ?? 0).toDouble(),
+      description: json['description'] ?? '',
+      isActive: json['is_active'] ?? true,
+      createdAt: DateTime.parse(json['created_at'] ?? ''),
+      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
     );
   }
 
@@ -77,17 +77,7 @@ class PricingPackageModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [
-        id,
-        hotelId,
-        name,
-        type,
-        price,
-        description,
-        isActive,
-        createdAt,
-        updatedAt,
-      ];
+  List<Object?> get props => [id, hotelId, name, type, price, description, isActive, createdAt, updatedAt];
 }
 
 /// Pricing type enum
@@ -216,14 +206,5 @@ class AdditionalServiceModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [
-        id,
-        hotelId,
-        name,
-        price,
-        description,
-        isActive,
-        createdAt,
-        updatedAt,
-      ];
+  List<Object?> get props => [id, hotelId, name, price, description, isActive, createdAt, updatedAt];
 }

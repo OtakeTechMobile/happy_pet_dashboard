@@ -12,6 +12,7 @@ class HotelModel extends Equatable {
   final String? phone;
   final String? email;
   final int capacity;
+  final int maxStaff;
   final Map<String, dynamic>? businessHours;
   final Map<String, dynamic>? settings;
   final bool isActive;
@@ -29,6 +30,7 @@ class HotelModel extends Equatable {
     this.phone,
     this.email,
     this.capacity = 20,
+    this.maxStaff = 3,
     this.businessHours,
     this.settings,
     this.isActive = true,
@@ -51,21 +53,22 @@ class HotelModel extends Equatable {
 
   factory HotelModel.fromJson(Map<String, dynamic> json) {
     return HotelModel(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      addressStreet: json['address_street'] as String?,
-      addressNumber: json['address_number'] as String?,
-      addressCity: json['address_city'] as String?,
-      addressState: json['address_state'] as String?,
-      addressZip: json['address_zip'] as String?,
-      phone: json['phone'] as String?,
-      email: json['email'] as String?,
-      capacity: json['capacity'] as int? ?? 20,
-      businessHours: json['business_hours'] as Map<String, dynamic>?,
-      settings: json['settings'] as Map<String, dynamic>?,
-      isActive: json['is_active'] as bool? ?? true,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      addressStreet: json['address_street'] ?? '',
+      addressNumber: json['address_number'] ?? '',
+      addressCity: json['address_city'] ?? '',
+      addressState: json['address_state'] ?? '',
+      addressZip: json['address_zip'] ?? '',
+      phone: json['phone'] ?? '',
+      email: json['email'] ?? '',
+      capacity: json['capacity'] ?? 0,
+      maxStaff: json['max_staff'] ?? 3,
+      businessHours: json['business_hours'] ?? {},
+      settings: json['settings'] ?? {},
+      isActive: json['is_active'] ?? true,
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toIso8601String()),
     );
   }
 
@@ -81,6 +84,7 @@ class HotelModel extends Equatable {
       'phone': phone,
       'email': email,
       'capacity': capacity,
+      'max_staff': maxStaff,
       'business_hours': businessHours,
       'settings': settings,
       'is_active': isActive,
@@ -100,6 +104,7 @@ class HotelModel extends Equatable {
     String? phone,
     String? email,
     int? capacity,
+    int? maxStaff,
     Map<String, dynamic>? businessHours,
     Map<String, dynamic>? settings,
     bool? isActive,
@@ -117,6 +122,7 @@ class HotelModel extends Equatable {
       phone: phone ?? this.phone,
       email: email ?? this.email,
       capacity: capacity ?? this.capacity,
+      maxStaff: maxStaff ?? this.maxStaff,
       businessHours: businessHours ?? this.businessHours,
       settings: settings ?? this.settings,
       isActive: isActive ?? this.isActive,
@@ -127,20 +133,21 @@ class HotelModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        addressStreet,
-        addressNumber,
-        addressCity,
-        addressState,
-        addressZip,
-        phone,
-        email,
-        capacity,
-        businessHours,
-        settings,
-        isActive,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    name,
+    addressStreet,
+    addressNumber,
+    addressCity,
+    addressState,
+    addressZip,
+    phone,
+    email,
+    capacity,
+    maxStaff,
+    businessHours,
+    settings,
+    isActive,
+    createdAt,
+    updatedAt,
+  ];
 }

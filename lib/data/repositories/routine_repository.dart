@@ -73,7 +73,11 @@ class RoutineRepository extends BaseRepository {
   /// Create new routine
   Future<RoutineModel> create(RoutineModel routine) async {
     try {
-      final response = await from(tableName).insert(routine.toJson()).select().single();
+      final json = routine.toJson();
+      if (json['id'] == '') {
+        json.remove('id');
+      }
+      final response = await from(tableName).insert(json).select().single();
       return RoutineModel.fromJson(response);
     } on Exception catch (error, stackTrace) {
       handleError(error, stackTrace);
@@ -134,11 +138,7 @@ class RoutineRepository extends BaseRepository {
   Future<RoutineModel> skipRoutine(String routineId, String reason) async {
     try {
       final response = await from(tableName)
-          .update({
-            'status': 'skipped',
-            'notes': reason,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
+          .update({'status': 'skipped', 'notes': reason, 'updated_at': DateTime.now().toIso8601String()})
           .eq('id', routineId)
           .select()
           .single();

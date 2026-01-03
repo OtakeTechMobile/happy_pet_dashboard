@@ -9,7 +9,9 @@ import 'core/services/persistence_service.dart';
 import 'core/services/supabase_service.dart';
 import 'core/theme/app_theme.dart';
 import 'data/repositories/auth_repository.dart';
+import 'data/repositories/hotel_repository.dart';
 import 'features/auth/presentation/cubit/auth_cubit.dart';
+import 'features/dashboard/presentation/cubit/tenant_cubit.dart';
 import 'features/settings/presentation/cubit/settings_cubit.dart';
 
 void main() async {
@@ -27,7 +29,7 @@ class HappyPetApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => SettingsCubit()..loadSettings()),
+        BlocProvider(create: (context) => SettingsCubit()),
         BlocProvider(
           lazy: false,
           create: (context) {
@@ -37,6 +39,7 @@ class HappyPetApp extends StatelessWidget {
             return cubit;
           },
         ),
+        BlocProvider(create: (context) => TenantCubit(HotelRepository(), context.read<AuthCubit>())),
       ],
       child: BlocBuilder<SettingsCubit, SettingsState>(
         builder: (context, state) {
