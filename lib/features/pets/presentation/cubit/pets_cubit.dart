@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:bloc/bloc.dart';
 
 import '../../../../data/repositories/pet_repository.dart';
+import '../../../../domain/enums/app_enums.dart';
 import '../../../../domain/models/pet_model.dart';
 import 'pets_state.dart';
 
@@ -56,7 +57,7 @@ class PetsCubit extends Cubit<PetsState> {
     }
   }
 
-  Future<void> updatePet(PetModel pet, {List<int>? photoBytes, String? fileName}) async {
+  Future<void> updatePet(PetModel pet, {List<int>? photoBytes, String? fileName, String? statusReason}) async {
     emit(PetsLoading());
     try {
       var petToUpdate = pet;
@@ -67,6 +68,11 @@ class PetsCubit extends Cubit<PetsState> {
       }
 
       await _repository.update(petToUpdate);
+
+      if (statusReason != null) {
+        await _repository.updatePetStatus(pet.id, pet.status, reason: statusReason);
+      }
+
       await loadPets();
     } catch (e) {
       log(e.toString());
@@ -74,10 +80,10 @@ class PetsCubit extends Cubit<PetsState> {
     }
   }
 
-  Future<void> deletePet(String id) async {
+  Future<void> deletePet(String id, {PetStatus status = PetStatus.inactive, String? reason}) async {
     emit(PetsLoading());
     try {
-      await _repository.delete(id);
+      await _repository.delete(id, status: status, reason: reason);
       await loadPets();
     } catch (e) {
       emit(PetsError(e.toString()));

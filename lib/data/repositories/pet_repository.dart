@@ -110,13 +110,18 @@ class PetRepository extends BaseRepository {
       if (pet == null) return;
 
       final newHistory = List<PetStatusHistory>.from(pet.statusHistory);
-      newHistory.add(PetStatusHistory(status: status, date: DateTime.now(), reason: reason));
+      newHistory.add(PetStatusHistory(
+        status: status,
+        date: DateTime.now(),
+        reason: reason ?? (status == PetStatus.inactive ? 'Inativado pelo sistema' : null),
+      ));
 
       await from(tableName)
           .update({
             'is_active': status == PetStatus.active,
             'status': status.toDbString(),
             'status_history': newHistory.map((h) => h.toJson()).toList(),
+            'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('id', id);
     } on Exception catch (error, stackTrace) {
@@ -126,7 +131,11 @@ class PetRepository extends BaseRepository {
 
   /// Update pet status with history
   Future<void> updatePetStatus(String id, PetStatus status, {String? reason}) async {
-    await delete(id, status: status, reason: reason);
+    try {
+      await delete(id, status: status, reason: reason);
+    } on Exception catch (error, stackTrace) {
+      handleError(error, stackTrace);
+    }
   }
 
   /// Upload pet photo to Supabase Storage

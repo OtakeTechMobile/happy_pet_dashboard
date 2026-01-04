@@ -97,7 +97,7 @@ class AuthRepository extends BaseRepository {
         'is_active': true,
       };
 
-      final response = await from('users').insert(userProfile).select().single();
+      final response = await from('users').upsert(userProfile).select().single();
       return UserModel.fromJson(response);
     } on Exception catch (error, stackTrace) {
       handleError(error, stackTrace);
@@ -165,6 +165,16 @@ class AuthRepository extends BaseRepository {
       return response;
     } on Exception catch (error, stackTrace) {
       handleError(error, stackTrace);
+    }
+  }
+
+  /// Check if there are any admin users in the database
+  Future<bool> hasAnyAdmin() async {
+    try {
+      final response = await from('users').select('id').eq('role', UserRole.admin.name).limit(1).maybeSingle();
+      return response != null;
+    } on Exception {
+      return false;
     }
   }
 }
