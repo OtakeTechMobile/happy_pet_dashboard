@@ -5,14 +5,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
+import '../../../../data/repositories/hotel_repository.dart';
 import '../../../../data/repositories/pet_repository.dart';
 import '../../../../data/repositories/tutor_repository.dart';
+import '../../../../domain/enums/app_enums.dart';
+import '../../../../domain/models/hotel_model.dart';
 import '../../../../domain/models/pet_model.dart';
 import '../../../../domain/models/tutor_model.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/utils/responsive_helper.dart';
 import '../../../../shared/widgets/filter_bar.dart';
 import '../../../../shared/widgets/pagination_controls.dart';
+import '../../../dashboard/presentation/cubit/tenant_cubit.dart';
 import '../cubit/pets_cubit.dart';
 import '../cubit/pets_state.dart';
 
@@ -244,12 +248,17 @@ class _EditPetDialogState extends State<EditPetDialog> {
   late TextEditingController _vetNameController;
   late TextEditingController _vetPhoneController;
   late TextEditingController _photoUrlController;
+  late TextEditingController _statusReasonController;
 
+  PetStatus? _selectedStatus;
   String? _selectedSpecies;
   String? _selectedGender;
   String? _selectedTutorId;
+  String? _selectedHotelId;
   List<TutorModel> _tutors = [];
   bool _isLoadingTutors = false;
+  List<HotelModel> _hotels = [];
+  bool _isLoadingHotels = false;
 
   final List<String> _speciesOptions = ['Cachorro', 'Gato', 'Ave', 'Outro'];
   final List<String> _genderOptions = ['Macho', 'Fêmea'];
@@ -293,10 +302,30 @@ class _EditPetDialogState extends State<EditPetDialog> {
     _vetNameController = TextEditingController(text: pet?.veterinarianName ?? '');
     _vetPhoneController = TextEditingController(text: pet?.veterinarianPhone ?? '');
     _photoUrlController = TextEditingController(text: pet?.photoUrl ?? '');
+    _statusReasonController = TextEditingController();
 
-    if (pet == null) {
+    _selectedStatus = pet?.status ?? PetStatus.active;
+    _selectedHotelId = pet?.hotelId ?? widget.hotelId;
+
+    _initRoleData();
+  }
+
+  void _initRoleData() {
+    final tenantState = context.read<TenantCubit>().state;
+    final isEditing = widget.pet != null;
+
+    if (tenantState.userRole == UserRole.admin) {
+      _loadHotels();
+    } else {
+      _selectedHotelId ??= tenantState.currentHotel?.id;
+    }
+
+    if (!isEditing) {
       _loadTutors();
       _selectedSpecies = _speciesOptions.first;
+    } else {
+      // Just load the current tutor name or all tutors of that hotel
+      _loadTutors();
     }
 
     _initializeVaccineStatus();
@@ -314,13 +343,15 @@ class _EditPetDialogState extends State<EditPetDialog> {
   }
 
   Future<void> _loadTutors() async {
+    if (_selectedHotelId == null) return;
+
     setState(() => _isLoadingTutors = true);
     try {
       final repo = TutorRepository();
-      final tutors = await repo.getAll(limit: 100);
+      final tutors = await repo.getAll(hotelId: _selectedHotelId, limit: 100);
       setState(() {
         _tutors = tutors;
-        if (_tutors.isNotEmpty) {
+        if (_tutors.isNotEmpty && _selectedTutorId == null) {
           _selectedTutorId = _tutors.first.id;
         }
       });
@@ -328,6 +359,19 @@ class _EditPetDialogState extends State<EditPetDialog> {
       // error handling
     } finally {
       setState(() => _isLoadingTutors = false);
+    }
+  }
+
+  Future<void> _loadHotels() async {
+    setState(() => _isLoadingHotels = true);
+    try {
+      final repo = HotelRepository();
+      final hotels = await repo.getAll(isActive: true);
+      setState(() => _hotels = hotels);
+    } catch (e) {
+      // error
+    } finally {
+      setState(() => _isLoadingHotels = false);
     }
   }
 
@@ -348,6 +392,7 @@ class _EditPetDialogState extends State<EditPetDialog> {
     _vetNameController.dispose();
     _vetPhoneController.dispose();
     _photoUrlController.dispose();
+    _statusReasonController.dispose();
     super.dispose();
   }
 
@@ -355,6 +400,7 @@ class _EditPetDialogState extends State<EditPetDialog> {
   Widget build(BuildContext context) {
     final isEditing = widget.pet != null;
     final title = isEditing ? 'Editar Pet' : 'Novo Pet';
+    final userRole = context.read<TenantCubit>().state.userRole;
 
     return AlertDialog(
       title: Text(title),
@@ -370,11 +416,32 @@ class _EditPetDialogState extends State<EditPetDialog> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _buildSectionHeader('Informações Básicas'),
+                  if (userRole == UserRole.admin && !isEditing) ...[
+                    if (_isLoadingHotels)
+                      const CircularProgressIndicator()
+                    else
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedHotelId,
+                        decoration: const InputDecoration(labelText: 'Hotel / Filial *'),
+                        items: _hotels.map((h) {
+                          return DropdownMenuItem(value: h.id, child: Text(h.name));
+                        }).toList(),
+                        onChanged: (val) {
+                          setState(() {
+                            _selectedHotelId = val;
+                            _selectedTutorId = null; // Reset tutor when hotel changes
+                          });
+                          _loadTutors();
+                        },
+                        validator: (val) => val == null ? 'Selecione um hotel' : null,
+                      ),
+                    const SizedBox(height: 16),
+                  ],
                   if (!isEditing) ...[
                     if (_isLoadingTutors)
                       const CircularProgressIndicator()
                     else if (_tutors.isEmpty)
-                      const Text('Nenhum tutor encontrado.', style: TextStyle(color: Colors.red))
+                      const Text('Nenhum tutor encontrado para este hotel.', style: TextStyle(color: Colors.red))
                     else
                       DropdownButtonFormField<String>(
                         initialValue: _selectedTutorId,
@@ -445,6 +512,28 @@ class _EditPetDialogState extends State<EditPetDialog> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 16),
+                  _buildSectionHeader('Status e Localização'),
+                  ResponsiveFormFieldRow(
+                    children: [
+                      DropdownButtonFormField<PetStatus>(
+                        initialValue: _selectedStatus,
+                        decoration: const InputDecoration(labelText: 'Status Atual'),
+                        items: PetStatus.values.map((s) {
+                          return DropdownMenuItem(value: s, child: Text(s.displayName));
+                        }).toList(),
+                        onChanged: (val) => setState(() => _selectedStatus = val),
+                      ),
+                    ],
+                  ),
+                  if (_selectedStatus != PetStatus.active) ...[
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _statusReasonController,
+                      decoration: const InputDecoration(labelText: 'Motivo da alteração de status'),
+                      maxLines: 2,
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   _buildSectionHeader('Saúde'),
                   ResponsiveFormFieldRow(
@@ -512,26 +601,9 @@ class _EditPetDialogState extends State<EditPetDialog> {
         if (isEditing)
           TextButton(
             onPressed: () {
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('Confirmar Exclusão'),
-                  content: const Text('Tem certeza que deseja excluir este pet?'),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-                    TextButton(
-                      onPressed: () {
-                        context.read<PetsCubit>().deletePet(widget.pet!.id);
-                        Navigator.pop(ctx);
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Excluir', style: TextStyle(color: Colors.red)),
-                    ),
-                  ],
-                ),
-              );
+              _showStatusChangeDialog(context);
             },
-            child: const Text('Excluir', style: TextStyle(color: Colors.red)),
+            child: const Text('Alterar Status', style: TextStyle(color: Colors.orange)),
           ),
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
         FilledButton(
@@ -560,7 +632,7 @@ class _EditPetDialogState extends State<EditPetDialog> {
               final newPet = PetModel(
                 id: widget.pet?.id ?? '',
                 tutorId: _selectedTutorId!,
-                hotelId: widget.pet?.hotelId ?? widget.hotelId,
+                hotelId: _selectedHotelId,
                 name: _nameController.text,
                 species: _selectedSpecies ?? 'Cachorro',
                 breed: _breedController.text,
@@ -579,15 +651,21 @@ class _EditPetDialogState extends State<EditPetDialog> {
                 veterinarianName: _vetNameController.text,
                 veterinarianPhone: _vetPhoneController.text,
                 photoUrl: _photoUrlController.text,
+                isActive: _selectedStatus == PetStatus.active,
+                status: _selectedStatus ?? PetStatus.active,
+                statusHistory: widget.pet?.statusHistory ?? [],
                 createdAt: widget.pet?.createdAt ?? DateTime.now(),
                 updatedAt: DateTime.now(),
               );
 
               if (isEditing) {
+                // If status changed, we might want to add to history via cubit logic or here
+                // For simplicity, we'll let the cubit handle the full model update
                 context.read<PetsCubit>().updatePet(
                   newPet,
                   photoBytes: _selectedPhotoBytes,
                   fileName: _selectedPhotoFileName,
+                  statusReason: _statusReasonController.text.isNotEmpty ? _statusReasonController.text : null,
                 );
               } else {
                 context.read<PetsCubit>().createPet(
@@ -692,6 +770,52 @@ class _EditPetDialogState extends State<EditPetDialog> {
           dense: true,
         );
       }).toList(),
+    );
+  }
+
+  void _showStatusChangeDialog(BuildContext context) {
+    PetStatus tempoStatus = PetStatus.inactive;
+    final reasonController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Alterar Status do Pet'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Em vez de excluir, altere o status do pet para manter o histórico.'),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<PetStatus>(
+                initialValue: tempoStatus,
+                items: PetStatus.values.where((s) => s != PetStatus.active).map((s) {
+                  return DropdownMenuItem(value: s, child: Text(s.displayName));
+                }).toList(),
+                onChanged: (val) => setDialogState(() => tempoStatus = val!),
+                decoration: const InputDecoration(labelText: 'Novo Status'),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: reasonController,
+                decoration: const InputDecoration(labelText: 'Motivo (Opcional)'),
+                maxLines: 2,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+            FilledButton(
+              onPressed: () {
+                context.read<PetsCubit>().deletePet(widget.pet!.id, status: tempoStatus, reason: reasonController.text);
+                Navigator.pop(ctx);
+                Navigator.pop(context);
+              },
+              child: const Text('Confirmar Alteração'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

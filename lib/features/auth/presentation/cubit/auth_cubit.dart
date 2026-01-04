@@ -41,7 +41,29 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       final user = _authRepository.currentUser;
       if (user != null) {
-        final profile = await _authRepository.getCurrentUserProfile();
+        var profile = await _authRepository.getCurrentUserProfile();
+
+        // [Rescue Mechanism] If no profile exists and no admins are in the system,
+        // we bootstrap the current user as an admin.
+        if (profile == null) {
+          try {
+            final hasAdmin = await _authRepository.hasAnyAdmin();
+            if (!hasAdmin) {
+              log('No admins found in database. Bootstrapping current user as Admin.');
+              profile = await _authRepository.createUserProfile(
+                userId: user.id,
+                fullName: user.userMetadata?['full_name'] ?? 'Super Admin',
+                role: UserRole.admin,
+                email: user.email,
+              );
+            }
+          } catch (e) {
+            log('Error bootstrapping admin (likely RLS): $e');
+            // If bootstrap fails, we still continue so the user can see the app,
+            // even if they don't have an admin profile yet.
+          }
+        }
+
         emit(AuthState.authenticated(user, profile));
       } else {
         emit(const AuthState.unauthenticated());

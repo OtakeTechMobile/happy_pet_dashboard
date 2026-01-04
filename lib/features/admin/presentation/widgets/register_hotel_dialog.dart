@@ -1,6 +1,9 @@
+import 'package:brasil_fields/brasil_fields.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/services/via_cep_service.dart';
 import '../../../../domain/models/hotel_model.dart';
 import '../cubit/hotel_owners_cubit.dart';
 
@@ -27,6 +30,7 @@ class _RegisterHotelDialogState extends State<RegisterHotelDialog> {
   final _addressStateController = TextEditingController();
   final _addressZipController = TextEditingController();
   bool _isActive = true;
+  bool _isLoadingCep = false;
 
   // Owner (Only for new hotels)
   final _ownerNameController = TextEditingController();
@@ -67,6 +71,30 @@ class _RegisterHotelDialogState extends State<RegisterHotelDialog> {
         },
       ];
     }
+    _addressZipController.addListener(_onZipChanged);
+  }
+
+  void _onZipChanged() {
+    final zip = _addressZipController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (zip.length == 8) {
+      _fetchAddress(zip);
+    }
+  }
+
+  Future<void> _fetchAddress(String zip) async {
+    setState(() => _isLoadingCep = true);
+    final service = ViaCepService();
+    final data = await service.getAddress(zip);
+    if (data != null && mounted) {
+      setState(() {
+        _addressStreetController.text = data['logradouro'] ?? '';
+        _addressCityController.text = data['localidade'] ?? '';
+        _addressStateController.text = data['uf'] ?? '';
+      });
+    }
+    if (mounted) {
+      setState(() => _isLoadingCep = false);
+    }
   }
 
   Future<void> _loadStaff() async {
@@ -90,6 +118,7 @@ class _RegisterHotelDialogState extends State<RegisterHotelDialog> {
 
   @override
   void dispose() {
+    _addressZipController.removeListener(_onZipChanged);
     _hotelNameController.dispose();
     _hotelEmailController.dispose();
     _hotelPhoneController.dispose();
@@ -241,7 +270,20 @@ class _RegisterHotelDialogState extends State<RegisterHotelDialog> {
                     Expanded(
                       child: TextFormField(
                         controller: _addressZipController,
-                        decoration: const InputDecoration(labelText: 'CEP'),
+                        decoration: InputDecoration(
+                          labelText: 'CEP',
+                          suffixIcon: _isLoadingCep
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                )
+                              : null,
+                        ),
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly, CepInputFormatter()],
                       ),
                     ),
                   ],
@@ -413,17 +455,30 @@ class _RegisterHotelDialogState extends State<RegisterHotelDialog> {
                     )
                     .toList();
 
+                final newHotel = HotelModel(
+                  id: '',
+                  name: _hotelNameController.text,
+                  email: _hotelEmailController.text,
+                  phone: _hotelPhoneController.text,
+                  capacity: int.tryParse(_capacityController.text) ?? 20,
+                  maxStaff: int.tryParse(_maxStaffController.text) ?? 3,
+                  addressStreet: _addressStreetController.text,
+                  addressNumber: _addressNumberController.text,
+                  addressCity: _addressCityController.text,
+                  addressState: _addressStateController.text,
+                  addressZip: _addressZipController.text,
+                  isActive: _isActive,
+                  createdAt: DateTime.now(),
+                  updatedAt: DateTime.now(),
+                );
+
                 await cubit.registerHotelWithOwner(
-                  hotelName: _hotelNameController.text,
+                  hotel: newHotel,
                   ownerName: _ownerNameController.text,
                   ownerEmail: _ownerEmailController.text,
                   ownerPassword: _ownerPasswordController.text,
                   staffData: staffList,
                 );
-
-                // We should also update the other hotel fields after creation if they were filled
-                // but currently registerHotelWithOwner creates a basic hotel.
-                // Let's optimize this later if needed.
               }
               Navigator.pop(context);
             }

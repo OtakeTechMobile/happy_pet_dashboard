@@ -50,7 +50,7 @@ class HotelOwnersCubit extends Cubit<HotelOwnersState> {
   }
 
   Future<void> registerHotelWithOwner({
-    required String hotelName,
+    required HotelModel hotel,
     required String ownerName,
     required String ownerEmail,
     required String ownerPassword,
@@ -59,14 +59,7 @@ class HotelOwnersCubit extends Cubit<HotelOwnersState> {
     emit(HotelOwnersLoading());
     try {
       // 1. Create Hotel
-      final newHotel = HotelModel(
-        id: '',
-        name: hotelName,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        maxStaff: 3,
-      );
-      final createdHotel = await _hotelRepository.create(newHotel);
+      final createdHotel = await _hotelRepository.create(hotel);
 
       // 2. Create the Owner (Auth + Profile).
       await authRepository.signupNewUser(

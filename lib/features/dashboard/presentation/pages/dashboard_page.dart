@@ -1,16 +1,28 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
-import '../../../../l10n/app_localizations.dart';
+import '../../../../data/repositories/dashboard_repository.dart';
+import '../../../../domain/enums/app_enums.dart';
+import '../../../../domain/models/dashboard_metrics.dart';
 import '../cubit/dashboard_cubit.dart';
+import '../cubit/tenant_cubit.dart';
+import '../widgets/dashboard_widgets.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(create: (context) => DashboardCubit()..loadDashboardData(), child: const DashboardView());
+    final tenantState = context.watch<TenantCubit>().state;
+    final role = tenantState.userRole;
+    final hotelId = tenantState.currentHotel?.id;
+
+    return BlocProvider(
+      create: (context) => DashboardCubit(DashboardRepository())
+        ..loadDashboardData(role: role, hotelId: hotelId),
+      child: const DashboardView(),
+    );
   }
 }
 
@@ -19,7 +31,9 @@ class DashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final tenantState = context.read<TenantCubit>().state;
+    final currencyFormat = NumberFormat.simpleCurrency(locale: 'pt_BR');
+
     return Scaffold(
       body: BlocBuilder<DashboardCubit, DashboardState>(
         builder: (context, state) {
@@ -27,172 +41,192 @@ class DashboardView extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          return SingleChildScrollView(
-            padding:  EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n?.overview ?? '', style: Theme.of(context).textTheme.headlineMedium),
-                const SizedBox(height: 24),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final width = constraints.maxWidth;
-                    // Responsive grid: 1 column on mobile, 2 on tablet, 3 on desktop
-                    int crossAxisCount = 1;
-                    if (width > 600) crossAxisCount = 2;
-                    if (width > 1100) crossAxisCount = 3;
+          if (state is DashboardError) {
+            return Center(child: Text(state.message, style: const TextStyle(color: Colors.red)));
+          }
 
-                    return Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
-                      children: [
-                        _buildChartCard(
-                          context,
-                          l10n?.revenueTrend ?? '',
-                          const _LineChartSample(),
-                          width: (width - (crossAxisCount - 1) * 16) / crossAxisCount,
-                        ),
-                        _buildChartCard(
-                          context,
-                          l10n?.appointments ?? '',
-                          const _BarChartSample(),
-                          width: (width - (crossAxisCount - 1) * 16) / crossAxisCount,
-                        ),
-                        _buildChartCard(
-                          context,
-                          l10n?.petTypes ?? '',
-                          const _PieChartSample(),
-                          width: (width - (crossAxisCount - 1) * 16) / crossAxisCount,
-                        ),
-                      ],
+          if (state is DashboardLoaded) {
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<DashboardCubit>().loadDashboardData(
+                      role: tenantState.userRole,
+                      hotelId: tenantState.currentHotel?.id,
                     );
-                  },
+              },
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tenantState.userRole == UserRole.admin 
+                        ? 'Saúde da Rede' 
+                        : 'Dashboard Operacional - ${tenantState.currentHotel?.name ?? ""}',
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 24),
+                    if (tenantState.userRole == UserRole.admin)
+                      _AdminDashboardBody(metrics: state.adminMetrics!, currencyFormat: currencyFormat)
+                    else
+                      _OwnerDashboardBody(metrics: state.ownerMetrics!, currencyFormat: currencyFormat),
+                  ],
                 ),
-              ],
-            ),
-          );
+              ),
+            );
+          }
+
+          return const SizedBox.shrink();
         },
       ),
     );
   }
+}
 
-  Widget _buildChartCard(BuildContext context, String title, Widget chart, {required double width}) {
-    return SizedBox(
-      width: width,
-      height: 300,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 16),
-              Expanded(child: chart),
-            ],
-          ),
+class _AdminDashboardBody extends StatelessWidget {
+  final dynamic metrics; // AdminDashboardMetrics
+  final NumberFormat currencyFormat;
+
+  const _AdminDashboardBody({required this.metrics, required this.currencyFormat});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                SummaryCard(
+                  title: 'Hotéis Ativos',
+                  value: metrics.activeHotels.toString(),
+                  icon: Icons.hotel,
+                  color: Colors.green,
+                ),
+                SummaryCard(
+                  title: 'Pets na Rede',
+                  value: metrics.totalPets.toString(),
+                  icon: Icons.pets,
+                  color: Colors.blue,
+                ),
+                SummaryCard(
+                  title: 'Faturamento Total',
+                  value: currencyFormat.format(metrics.totalRevenue),
+                  icon: Icons.payments,
+                  color: Colors.purple,
+                ),
+              ],
+            );
+          },
         ),
-      ),
+        const SizedBox(height: 24),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final chartWidth = (constraints.maxWidth - 16) / (constraints.maxWidth > 1100 ? 2 : 1);
+            return Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                MetricCard(
+                  title: 'Crescimento de Hotéis',
+                  chart: LineMetricChart(data: metrics.hotelGrowth),
+                  width: chartWidth,
+                ),
+                MetricCard(
+                  title: 'Distribuição de Porte',
+                  chart: PieMetricChart(
+                    data: (metrics.hotelDistribution as Map<String, double>)
+                        .entries
+                        .map((e) => ChartDataPoint(label: e.key, value: e.value))
+                        .toList(),
+                  ),
+                  width: chartWidth,
+                ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 }
 
-class _LineChartSample extends StatelessWidget {
-  const _LineChartSample();
+class _OwnerDashboardBody extends StatelessWidget {
+  final dynamic metrics; // OwnerDashboardMetrics
+  final NumberFormat currencyFormat;
+
+  const _OwnerDashboardBody({required this.metrics, required this.currencyFormat});
 
   @override
   Widget build(BuildContext context) {
-    return LineChart(
-      LineChartData(
-        gridData: const FlGridData(show: false),
-        titlesData: const FlTitlesData(show: false),
-        borderData: FlBorderData(show: false),
-        lineBarsData: [
-          LineChartBarData(
-            spots: const [
-              FlSpot(0, 3),
-              FlSpot(2.6, 2),
-              FlSpot(4.9, 5),
-              FlSpot(6.8, 3.1),
-              FlSpot(8, 4),
-              FlSpot(9.5, 3),
-              FlSpot(11, 4),
-            ],
-            isCurved: true,
-            color: Theme.of(context).colorScheme.primary,
-            barWidth: 3,
-            isStrokeCapRound: true,
-            dotData: const FlDotData(show: false),
-            belowBarData: BarAreaData(show: true, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)),
-          ),
-        ],
-      ),
-    );
-  }
-}
+    return Column(
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                SummaryCard(
+                  title: 'Ocupação',
+                  value: '${metrics.occupation} / ${metrics.capacity}',
+                  icon: Icons.pie_chart,
+                  color: metrics.occupationRate > 80 ? Colors.orange : Colors.green,
+                ),
+                SummaryCard(
+                  title: 'Check-outs em breve',
+                  value: metrics.upcomingCheckouts.toString(),
+                  icon: Icons.exit_to_app,
+                  color: Colors.blue,
+                ),
+                SummaryCard(
+                  title: 'Vacinas Vencendo',
+                  value: metrics.expiringVaccinations.toString(),
+                  icon: Icons.vaccines,
+                  color: Colors.red,
+                ),
+                SummaryCard(
+                  title: 'Receita Mensal',
+                  value: currencyFormat.format(metrics.monthlyRevenue),
+                  icon: Icons.monetization_on,
+                  color: Colors.teal,
+                ),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 24),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final fullWidth = constraints.maxWidth;
+            final halfWidth = (constraints.maxWidth - 16) / 2;
+            final isDesktop = constraints.maxWidth > 1100;
 
-class _BarChartSample extends StatelessWidget {
-  const _BarChartSample();
-
-  @override
-  Widget build(BuildContext context) {
-    return BarChart(
-      BarChartData(
-        barGroups: [
-          BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 8, color: Theme.of(context).colorScheme.secondary)]),
-          BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 10, color: Theme.of(context).colorScheme.secondary)]),
-          BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 14, color: Theme.of(context).colorScheme.secondary)]),
-          BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 15, color: Theme.of(context).colorScheme.secondary)]),
-          BarChartGroupData(x: 4, barRods: [BarChartRodData(toY: 13, color: Theme.of(context).colorScheme.secondary)]),
-        ],
-        titlesData: const FlTitlesData(show: false),
-        gridData: const FlGridData(show: false),
-        borderData: FlBorderData(show: false),
-      ),
-    );
-  }
-}
-
-class _PieChartSample extends StatelessWidget {
-  const _PieChartSample();
-
-  @override
-  Widget build(BuildContext context) {
-    return PieChart(
-      PieChartData(
-        sections: [
-          PieChartSectionData(
-            color: Theme.of(context).colorScheme.primary,
-            value: 40,
-            title: '40%',
-            radius: 50,
-            titleStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-          PieChartSectionData(
-            color: Theme.of(context).colorScheme.secondary,
-            value: 30,
-            title: '30%',
-            radius: 50,
-            titleStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-          PieChartSectionData(
-            color: Theme.of(context).colorScheme.tertiary,
-            value: 15,
-            title: '15%',
-            radius: 50,
-            titleStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-          PieChartSectionData(
-            color: Colors.grey,
-            value: 15,
-            title: '15%',
-            radius: 50,
-            titleStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-        ],
-        sectionsSpace: 0,
-        centerSpaceRadius: 40,
-      ),
+            return Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                MetricCard(
+                  title: 'Tendência de Entradas/Saídas (Horários de Pico)',
+                  chart: BarMetricChart(data: metrics.peakHours, color: Colors.indigo),
+                  width: isDesktop ? halfWidth : fullWidth,
+                ),
+                MetricCard(
+                  title: 'Tipos de Pets',
+                  chart: PieMetricChart(data: metrics.petTypes),
+                  width: isDesktop ? halfWidth : fullWidth,
+                ),
+                MetricCard(
+                  title: 'Agendamentos da Semana',
+                  chart: LineMetricChart(data: metrics.bookingTrends, color: Colors.teal),
+                  width: fullWidth,
+                ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 }

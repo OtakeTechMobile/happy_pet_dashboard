@@ -19,7 +19,8 @@ enum UserRole {
   }
 
   static UserRole fromString(String value) {
-    return UserRole.values.firstWhere((role) => role.name == value.toLowerCase(), orElse: () => UserRole.staff);
+    final lowerValue = value.trim().toLowerCase();
+    return UserRole.values.firstWhere((role) => role.name == lowerValue, orElse: () => UserRole.staff);
   }
 }
 
@@ -264,20 +265,35 @@ enum PaymentMethod {
 /// Pet status enum
 enum PetStatus {
   active,
-  inactive;
+  inactive,
+  deceased,
+  escaped,
+  donated,
+  other;
 
   String get displayName {
     switch (this) {
       case PetStatus.active:
         return 'Ativo';
-
       case PetStatus.inactive:
         return 'Inativo';
+      case PetStatus.deceased:
+        return 'Falecido';
+      case PetStatus.escaped:
+        return 'Fugido';
+      case PetStatus.donated:
+        return 'Doado';
+      case PetStatus.other:
+        return 'Outro';
     }
   }
 
   static PetStatus fromString(String value) {
-    return PetStatus.values.firstWhere((status) => status.name == value.toLowerCase(), orElse: () => PetStatus.active);
+    final lowerValue = value.trim().toLowerCase();
+    return PetStatus.values.firstWhere(
+      (status) => status.name == lowerValue,
+      orElse: () => PetStatus.active,
+    );
   }
 
   String toDbString() => name;
